@@ -91,6 +91,11 @@ function procesar(e) {
 
     hoja.appendRow(fila);
 
+    // El teléfono se guarda como TEXTO para conservar el "+" y los ceros iniciales
+    // (si no, Google Sheets lo interpreta como número y elimina el "+").
+    var ultima = hoja.getLastRow();
+    hoja.getRange(ultima, 4).setNumberFormat('@').setValue(params.telefono || '');
+
     return ContentService
       .createTextOutput(JSON.stringify({ ok: true, pais: nombrePais }))
       .setMimeType(ContentService.MimeType.JSON);
