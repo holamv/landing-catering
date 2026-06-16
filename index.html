@@ -18,6 +18,10 @@
     --blanco:     #FFFFFF;
     --txt:        #1A1A1A;
     --borde:      #E0E0E0;
+    /* Degradados (la marca #2EAA4A es la parada central) */
+    --grad-hero:   radial-gradient(120% 120% at 15% 10%, #3FBE5C 0%, #2EAA4A 45%, #1F8038 100%);
+    --grad-accent: linear-gradient(90deg, #2EAA4A 0%, #5FD37A 100%);
+    --grad-form:   linear-gradient(160deg, #2EAA4A 0%, #258C3C 100%);
   }
 
   *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
@@ -71,12 +75,12 @@
     color: #000000; text-decoration: none;
     transition: all 0.2s;
   }
-  .nav-cta:hover { background: #258C3C; color: #000000; }
+  .nav-cta:hover { background: #258C3C; color: #000000; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(46,170,74,0.35); }
 
   /* ─── HERO ─── */
   .hero {
     margin-top: 0;
-    background: var(--verde);
+    background: var(--grad-hero);
     min-height: 88vh;
     position: relative;
     display: flex; align-items: center; justify-content: center;
@@ -85,20 +89,25 @@
     padding: 80px 48px;
   }
 
-  /* floating food plates */
-.plate svg { width:100%; height:100%; }
-@keyframes float1 {
-    0%,100%{ transform: translateY(-55%); }
-    50%{ transform: translateY(-60%); }
+  /* ─── Decoración flotante del hero (sin fotos) ─── */
+  .hero-deco { position:absolute; inset:0; z-index:1; pointer-events:none; overflow:hidden; }
+  .hero-deco .blob {
+    position:absolute; border-radius:50%; filter:blur(2px);
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.35), rgba(255,255,255,0) 70%);
   }
-  @keyframes float2 {
-    0%,100%{ transform: translateX(-50%) translateY(0); }
-    50%{ transform: translateX(-50%) translateY(-12px); }
+  .hero-deco .blob.b1 { width:340px; height:340px; top:-80px; left:-60px; animation: floaty 9s ease-in-out infinite; }
+  .hero-deco .blob.b2 { width:240px; height:240px; bottom:-70px; right:-40px; animation: floaty 11s ease-in-out infinite reverse; }
+  .hero-deco .blob.b3 { width:160px; height:160px; top:40%; right:12%;
+    background: radial-gradient(circle, rgba(31,128,56,0.45), transparent 70%); animation: floaty 7s ease-in-out infinite; }
+  .hero-deco .deco-ring {
+    position:absolute; width:120px; height:120px; bottom:14%; left:8%; opacity:.5;
+    animation: spin 26s linear infinite, floaty 8s ease-in-out infinite;
   }
-  @keyframes floatr {
-    0%,100%{ transform: translateY(-50%); }
-    50%{ transform: translateY(-44%); }
-  }
+  .hero-deco .deco-emoji { position:absolute; font-size:2.4rem; opacity:.9; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.25)); }
+  .hero-deco .deco-emoji.e1 { top:18%; left:10%;  animation: floaty 6s ease-in-out infinite; }
+  .hero-deco .deco-emoji.e2 { top:24%; right:14%; animation: floaty 7.5s ease-in-out infinite 0.6s; }
+  .hero-deco .deco-emoji.e3 { bottom:16%; right:22%; animation: floaty 8.5s ease-in-out infinite 0.3s; }
+  @keyframes floaty { 0%,100%{ transform: translateY(0) translateX(0); } 50%{ transform: translateY(-16px) translateX(6px); } }
 
   .hero-content {
     position: relative; z-index: 2;
@@ -417,7 +426,12 @@
     font-weight: 900; letter-spacing: -1.2px;
     line-height: 1.1; color: var(--txt);
   }
-  .sec-title span { color: var(--verde); }
+  .sec-title span {
+    color: var(--verde); /* fallback sin soporte de background-clip */
+    background: var(--grad-accent);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
   .sec-sub {
     font-size: 1rem; color: var(--gris);
     line-height: 1.75; margin-top: 14px;
@@ -480,7 +494,8 @@
     transform: translateY(-4px);
     box-shadow: 0 12px 40px rgba(46,170,74,0.12);
   }
-  .ben-emoji { font-size: 2.2rem; margin-bottom: 18px; display: block; }
+  .ben-emoji { font-size: 2.2rem; margin-bottom: 18px; display: block; transition: transform 0.3s ease; }
+  .ben-card:hover .ben-emoji { transform: scale(1.15) rotate(-6deg); }
   .ben-num {
     font-size: 0.7rem; font-weight: 800;
     color: var(--verde); letter-spacing: 2px;
@@ -495,7 +510,7 @@
 
   .ben-highlight {
     grid-column: span 3;
-    background: var(--verde);
+    background: var(--grad-form);
     border-radius: 20px; padding: 44px 48px;
     display: flex; align-items: center; justify-content: space-between; gap: 40px;
     border: none;
@@ -584,7 +599,7 @@
 
   /* ─── FORMULARIO ─── */
   .form-sec {
-    background: var(--verde);
+    background: var(--grad-form);
     padding: 100px 64px;
   }
   .form-inner {
@@ -734,6 +749,7 @@
   /* ─── RESPONSIVE MOBILE HERO ─── */
   @media (max-width: 600px) {
     h1 { font-size: clamp(2.2rem, 8vw, 3.5rem); letter-spacing: -1.2px; }
+    .hero-deco .deco-emoji.e2, .hero-deco .deco-emoji.e3 { display: none; }
     .hero-stats { flex-direction: row; flex-wrap: wrap; }
     .hs { min-width: 50%; border-right: none !important; border-bottom: 1px solid rgba(255,255,255,0.2); }
     .hs:nth-child(odd) { border-right: 1px solid rgba(255,255,255,0.2) !important; }
@@ -742,14 +758,20 @@
   .reveal.v { opacity:1; transform:none; }
   .d1{transition-delay:0.1s} .d2{transition-delay:0.2s} .d3{transition-delay:0.3s}
 
+  /* micro-interacción: botón play del video */
+  .video-thumb:hover .vt-play { transform: scale(1.08); }
+
   /* ─── RESPONSIVE ─── */
   @media (max-width: 960px) {
     nav { padding: 0 20px; }
     .nav-links .nav-link { display: none; }
     .nav-links { gap: 0; }
     .hero { padding: 60px 20px; min-height: auto; padding-top: 120px; padding-bottom: 60px; }
-    .plate-tl,
-.hero-stats { flex-wrap: wrap; }
+    .hero-stats { flex-wrap: wrap; }
+    .hero-deco .blob.b1 { width:200px; height:200px; }
+    .hero-deco .blob.b2 { width:140px; height:140px; }
+    .hero-deco .deco-emoji { font-size:1.6rem; }
+    .hero-deco .deco-ring { display:none; }
     .hs { min-width: 50%; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.2); }
     .sec { padding: 72px 20px; }
     .ben-grid { grid-template-columns: 1fr; }
@@ -759,6 +781,19 @@
     .form-sec { padding: 80px 20px; }
     .form-inner { grid-template-columns: 1fr; gap: 48px; }
     footer { flex-direction: column; gap: 16px; text-align: center; padding: 32px 20px; }
+  }
+
+  /* ─── ACCESIBILIDAD: reduce el movimiento ─── */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+    .reveal { opacity: 1 !important; transform: none !important; }
+    .hero-deco { display: none; }
+    .strip-track { animation: none; }
   }
 </style>
 </head>
@@ -842,7 +877,16 @@
 
 <!-- HERO -->
 <section class="hero" style="margin-top:80px;">
-  <!-- Decorative plates -->
+  <!-- Decoración flotante (sin fotos) -->
+  <div class="hero-deco" aria-hidden="true">
+    <span class="blob b1"></span>
+    <span class="blob b2"></span>
+    <span class="blob b3"></span>
+    <svg class="deco-ring" viewBox="0 0 120 120"><circle cx="60" cy="60" r="56" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="3" stroke-dasharray="10 14"/></svg>
+    <span class="deco-emoji e1">🥗</span>
+    <span class="deco-emoji e2">🍅</span>
+    <span class="deco-emoji e3">🥑</span>
+  </div>
 <div class="hero-content">
     <h1>Convierte tu cocina en un negocio <em>más rentable</em></h1>
     <p class="hero-sub">
@@ -1032,18 +1076,18 @@
 </section>
 
 <!-- VIDEO SECTION -->
-<section style="background:#fff;padding:64px 24px;">
+<section class="reveal" style="background:#fff;padding:64px 24px;">
   <div style="max-width:900px;margin:0 auto;text-align:center;">
     <h2 style="font-size:2rem;font-weight:800;color:#111;margin-bottom:12px;line-height:1.2;">"De una cocina casera a una startup internacional"</h2>
     <p style="color:#555;font-size:1.05rem;max-width:680px;margin:0 auto 36px;line-height:1.7;">Mira la entrevista a nuestro cofundador, <strong>Carlos Andrade</strong>, y descubre cómo nuestra tecnología garantiza ventas programadas y rentabilidad para tu cocina desde el primer día.</p>
-    <a href="https://www.youtube.com/watch?v=eFBp7Foy_vc" target="_blank" rel="noopener"
+    <a class="video-thumb" href="https://www.youtube.com/watch?v=eFBp7Foy_vc" target="_blank" rel="noopener"
       style="display:block;position:relative;max-width:680px;margin:0 auto;border-radius:16px;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,0.18);cursor:pointer;">
       <img src="https://img.youtube.com/vi/eFBp7Foy_vc/maxresdefault.jpg"
         alt="Entrevista Carlos Andrade - Manzana Verde"
         style="width:100%;display:block;object-fit:cover;">
       <!-- Play button overlay -->
       <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.25);">
-        <div style="width:80px;height:80px;background:rgba(255,255,255,0.95);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 24px rgba(0,0,0,0.3);transition:transform 0.2s;">
+        <div class="vt-play" style="width:80px;height:80px;background:rgba(255,255,255,0.95);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 24px rgba(0,0,0,0.3);transition:transform 0.2s;">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
             <polygon points="6,3 20,12 6,21" fill="#2EAA4A"/>
           </svg>
@@ -1056,11 +1100,11 @@
 <!-- FORMULARIO -->
 <section class="form-sec" id="formulario">
   <div class="form-inner">
-    <div>
+    <div class="reveal">
       <h2 class="fl-title">¿Listo para crecer con nosotros?</h2>
       <p class="fl-sub">Un miembro del equipo te contactará, para contarte todos los detalles.</p>
     </div>
-    <div class="form-card">
+    <div class="form-card reveal d1">
       <div id="fw">
 
         <!-- Nombre completo -->
@@ -1346,7 +1390,7 @@
     var sl = document.getElementById('stat-ingresos-lbl');
     var sg = document.getElementById('stat-ganancias');
     var sgl = document.getElementById('stat-ganancias-lbl');
-    if (si) { si.style.opacity='0'; setTimeout(function(){ si.textContent=d.ingresos; si.style.opacity='1'; }, 180); }
+    if (si) { si.style.opacity='0'; setTimeout(function(){ si.textContent=d.ingresos; si.style.opacity='1'; if (typeof runStatCountup==='function') runStatCountup(); }, 180); }
     if (sl) { sl.style.opacity='0'; setTimeout(function(){ sl.textContent=d.ingresosLbl; sl.style.opacity='1'; }, 180); }
     if (sg) { sg.style.opacity='0'; setTimeout(function(){ sg.textContent=d.ganancias; sg.style.opacity='1'; }, 180); }
     if (sgl) { sgl.style.opacity='0'; setTimeout(function(){ sgl.textContent=d.gananciasLbl; sgl.style.opacity='1'; }, 180); }
@@ -1426,6 +1470,40 @@
     if (e.isIntersecting) { e.target.classList.add('v'); obs.unobserve(e.target); }
   }), { threshold: 0.08 });
   document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+  // ── COUNT-UP de la cifra del hero (#stat-ingresos) ───────────────────
+  // Parsea formatos como "S/ 40k", "$40 Millones", "$194k" → {prefix, value, suffix}
+  function parseStat(txt) {
+    var m = (txt || '').match(/^(\D*?)([\d.,]+)(.*)$/);
+    if (!m) return null;
+    return { prefix: m[1], value: parseFloat(m[2].replace(/[.,]/g, '')), suffix: m[3] };
+  }
+  var statRAF = null;
+  function animateCount(el, p, dur) {
+    if (!el || !p) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      el.textContent = p.prefix + p.value + p.suffix; return;
+    }
+    if (statRAF) cancelAnimationFrame(statRAF);
+    var start = null;
+    (function step(ts) {
+      if (start === null) start = ts;
+      var t = Math.min((ts - start) / dur, 1), e = 1 - Math.pow(1 - t, 3); // easeOutCubic
+      el.textContent = p.prefix + Math.round(p.value * e) + p.suffix;
+      if (t < 1) statRAF = requestAnimationFrame(step);
+    })(performance.now());
+  }
+  function runStatCountup() {
+    var el = document.getElementById('stat-ingresos');
+    if (el) animateCount(el, parseStat(el.textContent), 1100);
+  }
+  var heroStat = document.getElementById('stat-ingresos');
+  if (heroStat) {
+    var so = new IntersectionObserver(function(es) {
+      es.forEach(function(e) { if (e.isIntersecting) { runStatCountup(); so.unobserve(e.target); } });
+    }, { threshold: 0.5 });
+    so.observe(heroStat);
+  }
 
   // Progress bars
   const po = new IntersectionObserver(es => es.forEach(e => {
