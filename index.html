@@ -1404,24 +1404,27 @@
     var picker = document.getElementById('cpicker');
     if (picker && !picker.contains(e.target)) picker.classList.remove('open');
   });
-  // Inicializar con Perú por defecto
-  // Autodetección de país por IP
+  // ── País según la URL (link dedicado por país, sin geolocalización) ──
+  // Rutas: /pe /co /mx  ·  respaldo: ?pais=co  ·  raíz sin país → Perú
+  function paisDesdeURL() {
+    var mapa = {
+      'pe': 'Peru', 'peru': 'Peru', 'perú': 'Peru',
+      'co': 'Colombia', 'colombia': 'Colombia',
+      'mx': 'México', 'mexico': 'México', 'méxico': 'México'
+    };
+    // 1) ruta: primer segmento del path (ej. /co → "co")
+    var seg = (location.pathname || '').toLowerCase().replace(/^\/+|\/+$/g, '').split('/')[0];
+    if (mapa[seg]) return mapa[seg];
+    // 2) respaldo: ?pais= o ?p=
+    var qs = new URLSearchParams(location.search);
+    var q = (qs.get('pais') || qs.get('p') || '').toLowerCase();
+    if (mapa[q]) return mapa[q];
+    return null;
+  }
   window.addEventListener('DOMContentLoaded', function() {
-    fetch('https://ipapi.co/json/')
-      .then(function(r){ return r.json(); })
-      .then(function(data){
-        var countryCode = data.country_code;
-        var paisDetectado = 'Peru'; // default
-        if (countryCode === 'CO') paisDetectado = 'Colombia';
-        else if (countryCode === 'MX') paisDetectado = 'México';
-        else if (countryCode === 'PE') paisDetectado = 'Peru';
-        cambiarPais(paisDetectado);
-        sincronizarFormPais(paisDetectado);
-      })
-      .catch(function(){
-        cambiarPais('Peru');
-        sincronizarFormPais('Peru');
-      });
+    var pais = paisDesdeURL() || 'Peru'; // raíz sin país → Perú por defecto
+    cambiarPais(pais);
+    sincronizarFormPais(pais);
   });
 
   // Selector de país en formulario

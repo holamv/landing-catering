@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/pe", "destination": "/index.html" },
+    { "source": "/co", "destination": "/index.html" },
+    { "source": "/mx", "destination": "/index.html" }
+  ]
+}
