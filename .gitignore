@@ -11,3 +11,10 @@ desktop.ini
 *.log
 node_modules/
 .netlify/
+
+# Variables de entorno (el .env local no se commitea)
+.env
+.env.local
+
+# Output del build
+dist/
