@@ -15,16 +15,44 @@ landings_catering/
 
 ## ¿A dónde llegan los datos?
 
-El formulario envía (vía `fetch` GET `no-cors`) los campos:
-`nombre, correo, telefono, pais, establecimiento, horario, direccion, zona, comentarios`
-a un **Google Apps Script** que los escribe en este Sheet:
+Campos que captura el formulario (todos obligatorios menos *Comentarios*):
+`nombre, correo, telefono, pais, cargo, establecimiento, horario, direccion, zona, comentarios`
 
-https://docs.google.com/spreadsheets/d/1nhyk8wi_RUGe3QLnVhfpqIGHCB3y_cpSNLC6s9U3IZk/edit
+Hoy hay **dos destinos**:
 
-**Distinción por país:** cada envío cae en una pestaña según el país detectado
-(`Perú`, `Colombia`, `México`; cualquier otro → `Otros`). Columnas:
+1. **Google Sheet (ACTIVO — respaldo):** vía `fetch` GET `no-cors` a un **Google Apps Script**.
+   https://docs.google.com/spreadsheets/d/1nhyk8wi_RUGe3QLnVhfpqIGHCB3y_cpSNLC6s9U3IZk/edit
+   Una pestaña por país (`Perú`, `Colombia`, `México`; otro → `Otros`). Columnas:
+   `Fecha | Nombre | Correo | Teléfono | País | Establecimiento | Horario | Dirección | Zona / Distrito | Comentarios | Cargo`
 
-`Fecha | Nombre | Correo | Teléfono | País | Establecimiento | Horario | Dirección | Zona / Distrito | Comentarios`
+2. **Backend / BackOffice de leads (PREPARADO — pendiente de accesos):** ver sección siguiente.
+
+## Flujo al backend (BackOffice `backend.manzanaverde.la/catering/leads`)
+
+El envío al backend ya está **codificado y mapeado** en `enviar()` (`index.html`), pero **desactivado**
+hasta tener accesos. Mapeo landing → columnas del BackOffice:
+
+| Landing | BackOffice | Nota |
+|---|---|---|
+| `nombre` | NOMBRE | |
+| `correo` | EMAIL | |
+| `telefono` | TELÉFONO | |
+| `establecimiento` | CATERING | |
+| `zona` | DISTRITO | |
+| `direccion` | DIRECCIÓN | |
+| `cargo` | CARGO | **campo agregado** al form (dropdown Dueño/Administrador/Otro) |
+| `pais` → ciudad | OFICINA | Perú=**Lima** (confirmado); CO=**Bogotá**, MX=**Ciudad de México** ⟵ *pendiente confirmar* |
+| `comentarios` (+`horario`) | MENSAJE | el BackOffice **no tiene** columna Horario → se anexa al mensaje |
+| *(auto)* | FECHA | la pone el backend |
+
+### ⚠️ PENDIENTE DE ACCESOS (para activar el backend)
+1. **URL real del POST** que crea el lead — hoy `/catering/leads` da **405** (nginx; ese host es el front) y `api.manzanaverde.la` da **404** (la ruta no existe aún).
+2. **Nombres técnicos exactos** de cada campo (ajustar `backendPayload`).
+3. **Bearer**: no puede ir en el cliente → hace falta un **proxy** (serverless / Apps Script relay) que guarde el token del lado servidor.
+4. **CORS** para `https://landing-catering-nine.vercel.app`.
+
+Cuando existan (1)-(4): pegar la URL del proxy en `BACKEND_LEADS_ENDPOINT` (en `index.html`) y el envío se activa solo.
+*(Nota: para que el Sheet capture también `Cargo`, hay que re-desplegar `apps-script/Code.gs`, que ya tiene la columna.)*
 
 ## Puesta en marcha (paso único pendiente)
 
@@ -43,8 +71,9 @@ El despliegue del Apps Script debe hacerse desde la cuenta de Google dueña del 
 
 ## Probar localmente
 
-Abre `index.html` en el navegador (doble clic). El país se autodetecta por IP
-(`ipapi.co`); también se puede cambiar manualmente en el selector con banderas.
+El país ya **no** se autodetecta por IP: se define por la **ruta** (`/pe`, `/co`, `/mx`;
+respaldo `?pais=co`; raíz → Perú). En Vercel eso lo resuelve `vercel.json`. También se
+puede cambiar manualmente en el selector con banderas del formulario.
 
 ## Notas
 

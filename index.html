@@ -1164,6 +1164,18 @@
           <input type="hidden" id="fp" value="Peru">
         </div>
 
+        <!-- Cargo (rol en el establecimiento) — requerido por el BackOffice (columna CARGO) -->
+        <div class="fg" id="fg-cargo">
+          <label>Cargo <span class="req">*</span></label>
+          <select id="fcargo">
+            <option value="" disabled selected>Selecciona tu cargo</option>
+            <option value="Dueño">Dueño / Dueña</option>
+            <option value="Administrador">Administrador / Administradora</option>
+            <option value="Otro">Otro</option>
+          </select>
+          <span class="fg-error-msg">Indica tu cargo.</span>
+        </div>
+
         <!-- Nombre del establecimiento -->
         <div class="fg" id="fg-estab"><label>Nombre del establecimiento <span class="req">*</span></label><input type="text" id="festab" placeholder="Ej: Restaurante El Buen Sabor"><span class="fg-error-msg">Ingresa el nombre de tu establecimiento.</span></div>
 
@@ -1628,6 +1640,7 @@
     var horario   = document.getElementById('fhorario').value.trim();
     var direccion = document.getElementById('fdireccion').value.trim();
     var zona      = document.getElementById('fzona').value.trim();
+    var cargo     = document.getElementById('fcargo').value;
     var comentario= document.getElementById('fb').value.trim();
 
     var hasError = false;
@@ -1635,6 +1648,7 @@
     if (!nombre)    { setError('fg-nombre');    hasError = true; }
     if (!correo || !validateEmail(correo)) { setError('fg-correo');   hasError = true; }
     if (!telefono)  { setError('fg-telefono');  hasError = true; }
+    if (!cargo)     { setError('fg-cargo');     hasError = true; }
     if (!estab)     { setError('fg-estab');     hasError = true; }
     if (!horario)   { setError('fg-horario');   hasError = true; }
     if (!direccion) { setError('fg-direccion'); hasError = true; }
@@ -1666,6 +1680,7 @@
       correo: correo,
       telefono: telefono,
       pais: pais,
+      cargo: cargo,
       establecimiento: estab,
       horario: horario,
       direccion: direccion,
@@ -1673,7 +1688,42 @@
       comentarios: comentario
     });
 
-    // Envío via fetch con no-cors
+    // ── FLUJO BACKEND (BackOffice de leads: backend.manzanaverde.la/catering/leads) ──
+    // Mapeo landing → columnas del BackOffice:
+    //   nombre→NOMBRE · correo→EMAIL · telefono→TELÉFONO · establecimiento→CATERING
+    //   zona→DISTRITO · direccion→DIRECCIÓN · cargo→CARGO · pais→OFICINA (ciudad)
+    //   comentarios(+horario)→MENSAJE · FECHA la pone el backend
+    // OFICINA por país — Perú confirmado (Lima); CO/MX PENDIENTE de confirmar con negocio:
+    var OFICINA_POR_PAIS = { 'Peru': 'Lima', 'Colombia': 'Bogotá', 'México': 'Ciudad de México' };
+    var backendPayload = {
+      nombre:    nombre,
+      email:     correo,
+      telefono:  telefono,
+      catering:  estab,
+      cargo:     cargo,
+      oficina:   OFICINA_POR_PAIS[pais] || pais,
+      distrito:  zona,
+      direccion: direccion,
+      // El BackOffice no tiene columna "Horario": lo anexamos al mensaje para no perder el dato.
+      mensaje:   comentario + (horario ? (comentario ? ' · ' : '') + 'Horario de atención: ' + horario : '')
+    };
+
+    // ⚠️ PENDIENTE DE ACCESOS — completar cuando el equipo backend entregue:
+    //   1) URL real del POST que crea el lead (hoy /catering/leads = 405 nginx; api.manzanaverde.la = 404).
+    //   2) Nombres técnicos exactos de cada campo (ajustar backendPayload arriba).
+    //   3) Bearer: NO puede ir en el cliente → debe pasar por un PROXY (serverless / Apps Script relay).
+    //   4) CORS habilitado para https://landing-catering-nine.vercel.app
+    // Cuando exista, pegar aquí la URL del proxy/endpoint y el envío se activa solo:
+    var BACKEND_LEADS_ENDPOINT = ''; // <-- PENDIENTE DE ACCESOS
+    if (BACKEND_LEADS_ENDPOINT) {
+      fetch(BACKEND_LEADS_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(backendPayload)
+      }).catch(function () { /* no bloquea la UX; el Sheet ya guardó el lead como respaldo */ });
+    }
+
+    // ── ALMACENAMIENTO ACTIVO (respaldo mientras el backend está pendiente): Google Sheet ──
     var url = 'https://script.google.com/macros/s/AKfycbxB3aqfXkTx2ITyxwDtarS7aFL2hkExc_ftXR7jEtcctA2cICR0R_ip8bnxZoAuiraEwg/exec';
     fetch(url + '?' + params.toString(), {
       method: 'GET',

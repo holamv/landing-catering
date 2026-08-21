@@ -31,7 +31,8 @@ var HEADERS = [
   'Horario',
   'Dirección',
   'Zona / Distrito',
-  'Comentarios'
+  'Comentarios',
+  'Cargo'
 ];
 
 // Países soportados (cada uno es una pestaña). El valor de la landing llega en "pais".
@@ -86,7 +87,8 @@ function procesar(e) {
       params.horario || '',
       params.direccion || '',
       params.zona || '',
-      params.comentarios || ''
+      params.comentarios || '',
+      params.cargo || ''
     ];
 
     hoja.appendRow(fila);
