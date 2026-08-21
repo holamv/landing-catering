@@ -455,6 +455,20 @@
     max-width: 520px;
   }
 
+  /* ─── GALERÍA DE PLATOS ─── */
+  .galeria-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px; max-width: 1000px; margin: 0 auto;
+  }
+  .galeria-img {
+    width: 100%; height: 240px; object-fit: cover;
+    border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    transition: transform 0.3s ease;
+  }
+  .galeria-img:hover { transform: translateY(-4px) scale(1.02); }
+  @media (max-width: 600px) { .galeria-img { height: 200px; } }
+
 
   /* ─── PRENSA ─── */
   .press { background: var(--gris-claro); }
@@ -1114,6 +1128,22 @@
         </div>
       </div>
     </a>
+  </div>
+</section>
+
+<!-- GALERÍA DE PLATOS (se muestra sola cuando existen las fotos en /img) -->
+<section class="sec galeria-sec" id="platos" style="display:none;">
+  <div class="sec-inner" style="text-align:center;">
+    <span class="sec-tag">Producción real</span>
+    <h2 class="sec-title">Los platos que <span>vas a preparar</span></h2>
+    <p class="sec-sub" style="margin:14px auto 40px;">La presentación lista para servir que arman nuestras cocinas socias.</p>
+    <div class="galeria-grid">
+      <img class="galeria-img" src="img/plato-1.jpg" alt="Plato preparado — Manzana Verde" loading="lazy" onload="document.getElementById('platos').style.display='block'" onerror="this.remove()">
+      <img class="galeria-img" src="img/plato-2.jpg" alt="Plato preparado — Manzana Verde" loading="lazy" onload="document.getElementById('platos').style.display='block'" onerror="this.remove()">
+      <img class="galeria-img" src="img/plato-3.jpg" alt="Plato preparado — Manzana Verde" loading="lazy" onload="document.getElementById('platos').style.display='block'" onerror="this.remove()">
+      <img class="galeria-img" src="img/plato-4.jpg" alt="Plato preparado — Manzana Verde" loading="lazy" onload="document.getElementById('platos').style.display='block'" onerror="this.remove()">
+      <img class="galeria-img" src="img/plato-5.jpg" alt="Plato preparado — Manzana Verde" loading="lazy" onload="document.getElementById('platos').style.display='block'" onerror="this.remove()">
+    </div>
   </div>
 </section>
 

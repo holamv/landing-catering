@@ -1,7 +1,7 @@
 // Build mínimo para landing estática: inyecta el GTM container ID en index.html.
 // Toma GTM_ID de las variables de entorno (Vercel) o de un .env local, reemplaza
 // el token __GTM_ID__ y escribe el resultado en dist/. Sin dependencias.
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, copyFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -28,6 +28,19 @@ const out = src.replaceAll('__GTM_ID__', valid ? GTM_ID : '__GTM_ID__');
 const distDir = join(root, 'dist');
 mkdirSync(distDir, { recursive: true });
 writeFileSync(join(distDir, 'index.html'), out);
+
+// Copiar carpeta img/ (fotos de la landing) a dist/img/ si existe.
+const imgSrc = join(root, 'img');
+if (existsSync(imgSrc)) {
+  const imgOut = join(distDir, 'img');
+  mkdirSync(imgOut, { recursive: true });
+  let n = 0;
+  for (const f of readdirSync(imgSrc)) {
+    copyFileSync(join(imgSrc, f), join(imgOut, f));
+    n++;
+  }
+  console.log(`✓ ${n} imagen(es) copiada(s) a dist/img/`);
+}
 
 if (valid) {
   console.log(`✓ Build OK — GTM habilitado con ${GTM_ID} → dist/index.html`);
