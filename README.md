@@ -32,7 +32,7 @@ Hoy hay **dos destinos**:
 El envío va por el **proxy server-side del propio proyecto**: `enviar()` hace POST a `/api/lead`
 (misma URL de la landing, sin CORS) y `api/lead.js` reenvía al BackOffice
 (`POST /api/3.0/catering/leads`) con la API key leída de la variable de entorno
-`BACKOFFICE_LEADS_KEY` (Vercel → Project Settings → Environment Variables). Si la clave no está
+`CATERING_LEADS_API_KEY` (Vercel → Project Settings → Environment Variables). Si la clave no está
 configurada, el proxy responde 503 y el lead queda igual en el Sheet de respaldo.
 
 Mapeo landing → columnas del BackOffice:
@@ -55,7 +55,7 @@ Mapeo landing → columnas del BackOffice:
    repo del Backoffice (controller `V3\Catering\CreateCateringLeadController`, middleware dedicado
    `catering.leads.api` con header `X-Catering-Leads-Key`, clave en `CATERING_LEADS_API_KEY`);
    falta que Tech lo revise, genere la clave y lo suba.
-2. **Configurar `BACKOFFICE_LEADS_KEY` en Vercel** con esa misma clave, y redeploy.
+2. **Configurar `CATERING_LEADS_API_KEY` en Vercel** con esa misma clave, y redeploy.
 
 El resto ya quedó resuelto: URL y nombres de campos definidos, la clave va server-side en el proxy
 (`api/lead.js`) y no hay CORS porque el POST es al mismo dominio.

@@ -43,11 +43,12 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'method_not_allowed', message: 'Solo POST' });
   }
 
-  const key = process.env.BACKOFFICE_LEADS_KEY;
-  if (!key) {
+  const key = process.env.CATERING_LEADS_API_KEY;
+  const url = process.env.CATERING_LEADS_URL;
+  if (!key || !url) {
     return res.status(503).json({
-      error: 'not_configured',
-      message: 'Falta BACKOFFICE_LEADS_KEY en las variables de entorno de Vercel',
+      error: "not_configured",
+      message: "Faltan CATERING_LEADS_API_KEY / CATERING_LEADS_URL en Vercel",
     });
   }
 
@@ -99,10 +100,8 @@ export default async function handler(req, res) {
     message: b.mensaje || '',
   };
 
-  const base = process.env.BACKOFFICE_URL || 'https://backend.manzanaverde.la';
-
   try {
-    const r = await fetch(base + '/api/3.0/catering/leads', {
+    const r = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
