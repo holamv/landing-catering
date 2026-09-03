@@ -1177,9 +1177,10 @@
         <div class="fg" id="fg-zona"><label>Zona / Distrito <span class="req">*</span></label><input type="text" id="fzona"><span class="fg-error-msg">Indica la zona o distrito.</span></div>
 
         <!-- Comentarios -->
-        <div class="fg">
+        <div class="fg" id="fg-comentarios">
           <label>Comentarios <span style="color:#bbb;font-weight:400;text-transform:none">(opcional)</span></label>
           <textarea id="fb" placeholder="¿Tienes alguna pregunta o quieres contarnos algo más?"></textarea>
+          <span class="fg-error-msg">El comentario es muy largo. Acórtalo un poco.</span>
         </div>
 
         <!-- Aviso de fallo de envío: solo aparece si el lead no se pudo guardar -->
@@ -1769,12 +1770,12 @@
       // avisa que ese correo ya había entrado hoy, que no es un error.
       if (r.ok) { mostrarExito(); return; }
       return r.json().then(function (data) {
-        mostrarFalloEnvio(data);
+        mostrarFalloEnvio(data, r.status);
       }).catch(function () {
-        mostrarFalloEnvio(null);
+        mostrarFalloEnvio(null, r.status);
       });
     }).catch(function () {
-      mostrarFalloEnvio(null);
+      mostrarFalloEnvio(null, 0);
     });
   }
 
@@ -1791,9 +1792,12 @@
     catering_name: 'fg-estab',
     schedule: 'fg-horario',
     direction: 'fg-direccion',
-    district: 'fg-zona'
-    // country, branch_office_id y message no tienen campo visible: caen en el
-    // aviso general.
+    district: 'fg-zona',
+    message: 'fg-comentarios'
+    // country y branch_office_id no tienen campo visible en el formulario: el
+    // pais lo deduce la URL y la oficina la resuelve el BackOffice. Si vinieran
+    // en errors seria un problema de configuracion, no algo que el visitante
+    // pueda corregir, asi que caen en el aviso general.
   };
 
   // ⚠️ REGLA QUE NO SE TOCA: este camino NUNCA limpia el formulario.
@@ -1807,7 +1811,7 @@
   // form.reset(), nada de vaciar values, nada de recargar la página.
   // Si algún día se agrega un "limpiar formulario", que sea en el camino de
   // ÉXITO, nunca en este.
-  function mostrarFalloEnvio(data) {
+  function mostrarFalloEnvio(data, estado) {
     var btn = document.getElementById('btn-enviar');
     if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
 
@@ -1826,16 +1830,26 @@
       }
     }
 
+    // 401/403 (clave mal configurada en el servidor) y 503 (falta configurar el
+    // proxy) no son culpa del visitante y reintentar no arregla nada: decirle
+    // "revisa tu conexión" lo manda a intentar en vano.
+    var esProblemaNuestro = estado === 401 || estado === 403 || estado === 503;
+
     var aviso = document.getElementById('envio-fallo');
     if (aviso) {
-      // Dos situaciones distintas: si hay campos marcados, reintentar sin
-      // corregirlos daría lo mismo. Si no, el problema fue de conexión y sí
-      // tiene sentido volver a intentar.
-      aviso.textContent = marcados
-        ? 'Revisa los campos marcados en rojo y vuelve a enviar.'
-        : 'No pudimos enviar tu solicitud. Revisa tu conexión e inténtalo de nuevo — tus datos siguen acá.';
+      if (marcados) {
+        aviso.textContent = 'Revisa los campos marcados en rojo y vuelve a enviar.';
+      } else if (esProblemaNuestro) {
+        aviso.textContent = 'Estamos teniendo un problema técnico de nuestro lado. Tus datos siguen acá — vuelve a intentarlo en un rato.';
+      } else {
+        aviso.textContent = 'No pudimos enviar tu solicitud. Revisa tu conexión e inténtalo de nuevo — tus datos siguen acá.';
+      }
       aviso.style.display = 'block';
     }
+
+    // Queda en la consola para que quien revise el navegador vea el codigo real.
+    // El visitante no lo ve, pero acorta el diagnostico si alguien reporta el fallo.
+    try { console.warn('[catering-lead] envio fallido, estado ' + estado); } catch (e) {}
 
     var destino = primero || aviso;
     if (destino) destino.scrollIntoView({ behavior: 'smooth', block: 'center' });
