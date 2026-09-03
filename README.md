@@ -27,10 +27,15 @@ Hoy hay **dos destinos**:
 
 2. **Backend / BackOffice de leads (PREPARADO — pendiente de accesos):** ver sección siguiente.
 
-## Flujo al backend (BackOffice `backend.manzanaverde.la/catering/leads`)
+## Flujo al backend (BackOffice)
 
-El envío al backend ya está **codificado y mapeado** en `enviar()` (`index.html`), pero **desactivado**
-hasta tener accesos. Mapeo landing → columnas del BackOffice:
+El envío va por el **proxy server-side del propio proyecto**: `enviar()` hace POST a `/api/lead`
+(misma URL de la landing, sin CORS) y `api/lead.js` reenvía al BackOffice
+(`POST /api/3.0/catering/leads`) con la API key leída de la variable de entorno
+`BACKOFFICE_LEADS_KEY` (Vercel → Project Settings → Environment Variables). Si la clave no está
+configurada, el proxy responde 503 y el lead queda igual en el Sheet de respaldo.
+
+Mapeo landing → columnas del BackOffice:
 
 | Landing | BackOffice | Nota |
 |---|---|---|
@@ -45,13 +50,15 @@ hasta tener accesos. Mapeo landing → columnas del BackOffice:
 | `comentarios` (+`horario`) | MENSAJE | el BackOffice **no tiene** columna Horario → se anexa al mensaje |
 | *(auto)* | FECHA | la pone el backend |
 
-### ⚠️ PENDIENTE DE ACCESOS (para activar el backend)
-1. **URL real del POST** que crea el lead — hoy `/catering/leads` da **405** (nginx; ese host es el front) y `api.manzanaverde.la` da **404** (la ruta no existe aún).
-2. **Nombres técnicos exactos** de cada campo (ajustar `backendPayload`).
-3. **Bearer**: no puede ir en el cliente → hace falta un **proxy** (serverless / Apps Script relay) que guarde el token del lado servidor.
-4. **CORS** para `https://landing-catering-nine.vercel.app`.
+### Para activarlo (2 pasos)
+1. **Deploy del endpoint en el BackOffice** — `POST /api/3.0/catering/leads` ya está escrito en el
+   repo del Backoffice (controller `V3\Catering\CreateCateringLeadController`, middleware dedicado
+   `catering.leads.api` con header `X-Catering-Leads-Key`, clave en `CATERING_LEADS_API_KEY`);
+   falta que Tech lo revise, genere la clave y lo suba.
+2. **Configurar `BACKOFFICE_LEADS_KEY` en Vercel** con esa misma clave, y redeploy.
 
-Cuando existan (1)-(4): pegar la URL del proxy en `BACKEND_LEADS_ENDPOINT` (en `index.html`) y el envío se activa solo.
+El resto ya quedó resuelto: URL y nombres de campos definidos, la clave va server-side en el proxy
+(`api/lead.js`) y no hay CORS porque el POST es al mismo dominio.
 *(Nota: para que el Sheet capture también `Cargo`, hay que re-desplegar `apps-script/Code.gs`, que ya tiene la columna.)*
 
 ## Puesta en marcha (paso único pendiente)
