@@ -27,6 +27,37 @@ Hoy hay **dos destinos**:
 
 2. **Backend / BackOffice de leads (PREPARADO — pendiente de accesos):** ver sección siguiente.
 
+## ⚠️ Reglas que no se tocan
+
+**1. El aviso de error NUNCA limpia el formulario.**
+Se retiro el Google Sheet de respaldo: el BackOffice es el unico destino. Un rechazo no es
+un reintento, es una cocina socia perdida. Si ademas se le borra lo que escribio, no vuelve
+a llenar diez campos. El camino de error solo marca los campos, avisa y reactiva el boton
+(ver `mostrarFalloEnvio` en `index.html`). Si alguna vez se agrega un "limpiar formulario",
+va en el camino de EXITO, nunca en el de error.
+
+**2. El texto de error de la API no se muestra.**
+La API responde en ingles. La landing usa solo las CLAVES de `errors` (`email`, `city`,
+`phone`...) para saber que campo marcar, y muestra la copia en espanol que ya vive en cada
+`.fg-error-msg`. El mapeo esta en `CAMPO_POR_CLAVE` (`index.html`).
+
+**3. 200 y 201 son lo mismo: el lead se guardo.**
+El 201 es un lead nuevo; el 200 avisa que ese correo ya habia entrado hoy. Tratar el 200
+como error mostraria una falla donde no la hubo. La landing usa `r.ok`, que cubre los dos.
+
+**4. Formato de los campos.**
+`country` va como texto (`PE`/`CO`/`MX`), nunca un numero. `position` va la etiqueta
+(`Dueño`), nunca un id: si se manda `1`, Operaciones lee "1" en la columna Cargo.
+`city` tiene que ser una de las seis oficinas: Lima, Piura, Bogota, Ciudad de Mexico,
+Guadalajara, Monterrey.
+
+## Estado del endpoint
+
+Hasta que el PR del BackOffice este aprobado y desplegado **con la clave puesta en el
+servidor**, `CATERING_LEADS_URL` responde 401 a proposito. Todo puede quedar cableado y
+publicado, pero **la prueba real recien vale despues del deploy**: antes, un 401 no dice
+nada sobre si el circuito funciona.
+
 ## Flujo al backend (BackOffice)
 
 El envío va por el **proxy server-side del propio proyecto**: `enviar()` hace POST a `/api/lead`

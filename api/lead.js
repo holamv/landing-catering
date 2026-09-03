@@ -4,8 +4,14 @@
  * La landing hace POST /api/lead (mismo dominio, sin CORS) y esta funcion
  * reenvia el lead a POST /api/3.0/catering/leads del BackOffice con la clave
  * DEDICADA de este endpoint en el header X-Catering-Leads-Key. La clave vive
- * en la variable de entorno BACKOFFICE_LEADS_KEY (Vercel -> Project Settings
- * -> Environment Variables), nunca en el navegador.
+ * en las variables de entorno de Vercel (Project Settings -> Environment
+ * Variables), nunca en el navegador.
+ *
+ * ⚠️ NO HAY RESPALDO. Se retiro el Google Sheet: el BackOffice es el unico
+ * destino. Cada 4xx que devuelve este proxy es una cocina socia que se
+ * pierde, no un reintento. Por eso solo se rechaza lo que de verdad hace
+ * imposible guardar el lead, y la landing conserva SIEMPRE lo que la persona
+ * escribio (ver mostrarFalloEnvio en index.html).
  *
  * Si la clave no esta configurada responde 503 y no pasa nada: el Google
  * Sheet sigue guardando cada lead como respaldo, en paralelo.
