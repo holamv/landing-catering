@@ -1765,23 +1765,71 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(backendPayload)
     }).then(function (r) {
+      // 200 y 201 significan lo mismo: el lead quedó guardado. El 200 solo
+      // avisa que ese correo ya había entrado hoy, que no es un error.
       if (r.ok) { mostrarExito(); return; }
-      mostrarFalloEnvio();
+      return r.json().then(function (data) {
+        mostrarFalloEnvio(data);
+      }).catch(function () {
+        mostrarFalloEnvio(null);
+      });
     }).catch(function () {
-      mostrarFalloEnvio();
+      mostrarFalloEnvio(null);
     });
   }
 
+  // Clave que devuelve la API -> campo del formulario al que corresponde.
+  // La API responde en inglés; acá solo se usa la CLAVE para saber qué campo
+  // marcar. El texto que ve la persona es el que ya está en cada
+  // .fg-error-msg, en español. Nunca se muestra el mensaje de la API.
+  var CAMPO_POR_CLAVE = {
+    name: 'fg-nombre',
+    email: 'fg-correo',
+    phone: 'fg-telefono',
+    city: 'fg-ciudad',
+    position: 'fg-cargo',
+    catering_name: 'fg-estab',
+    schedule: 'fg-horario',
+    direction: 'fg-direccion',
+    district: 'fg-zona'
+    // country, branch_office_id y message no tienen campo visible: caen en el
+    // aviso general.
+  };
+
   // El envío falló: se devuelve el formulario con lo que la persona escribió
   // (no se borra nada) y se le ofrece reintentar.
-  function mostrarFalloEnvio() {
+  function mostrarFalloEnvio(data) {
     var btn = document.getElementById('btn-enviar');
     if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
+
+    var marcados = 0;
+    var primero = null;
+    var errores = data && data.errors;
+    if (errores) {
+      for (var clave in errores) {
+        var fgId = CAMPO_POR_CLAVE[clave];
+        if (!fgId) continue;
+        var el = document.getElementById(fgId);
+        if (!el) continue;
+        el.classList.add('error');
+        if (!primero) primero = el;
+        marcados++;
+      }
+    }
+
     var aviso = document.getElementById('envio-fallo');
     if (aviso) {
+      // Dos situaciones distintas: si hay campos marcados, reintentar sin
+      // corregirlos daría lo mismo. Si no, el problema fue de conexión y sí
+      // tiene sentido volver a intentar.
+      aviso.textContent = marcados
+        ? 'Revisa los campos marcados en rojo y vuelve a enviar.'
+        : 'No pudimos enviar tu solicitud. Revisa tu conexión e inténtalo de nuevo — tus datos siguen acá.';
       aviso.style.display = 'block';
-      aviso.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
+
+    var destino = primero || aviso;
+    if (destino) destino.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   // Limpiar error en campo al empezar a escribir

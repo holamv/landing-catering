@@ -58,31 +58,41 @@ export default async function handler(req, res) {
   // aca tambien porque la validacion del navegador es una sugerencia, no una
   // barrera, y desde que el Sheet salio no hay red de seguridad: un lead
   // rechazado por el BackOffice es una cocina perdida.
-  const faltantes = ['nombre', 'email', 'telefono', 'catering', 'cargo', 'pais', 'ciudad', 'distrito', 'direccion', 'horario']
-    .filter((campo) => !b[campo] || String(b[campo]).trim() === '');
-  if (faltantes.length) {
-    return res.status(400).json({
-      error: 'validation_error',
-      message: 'Faltan campos obligatorios',
-      details: faltantes,
-    });
+  // Campo del formulario -> clave con la que lo nombra la API. Se responde con
+  // las claves de la API (no con las del formulario) para que el error de este
+  // proxy y el del BackOffice tengan exactamente la misma forma: asi la landing
+  // marca el campo con un solo camino y no dos.
+  const CLAVE_API = {
+    nombre: 'name', email: 'email', telefono: 'phone', catering: 'catering_name',
+    cargo: 'position', pais: 'country', ciudad: 'city', distrito: 'district',
+    direccion: 'direction', horario: 'schedule',
+  };
+
+  const errors = {};
+  for (const campo of Object.keys(CLAVE_API)) {
+    if (!b[campo] || String(b[campo]).trim() === '') {
+      errors[CLAVE_API[campo]] = ['Campo obligatorio'];
+    }
+  }
+  if (Object.keys(errors).length) {
+    return res.status(422).json({ success: false, message: 'Error de validacion', errors });
   }
 
   const country = CODIGO_PAIS[normalizar(b.pais)];
   if (!country) {
-    return res.status(400).json({
-      error: 'validation_error',
-      message: 'País desconocido: ' + b.pais,
-      details: ['pais debe ser Perú, Colombia o México'],
+    return res.status(422).json({
+      success: false,
+      message: 'Error de validacion',
+      errors: { country: ['Pais fuera de operacion'] },
     });
   }
 
   const city = CIUDADES[normalizar(b.ciudad)];
   if (!city) {
-    return res.status(400).json({
-      error: 'validation_error',
-      message: 'Ciudad sin operación: ' + b.ciudad,
-      details: ['ciudad debe ser una donde MV opera: ' + Object.values(CIUDADES).filter((v, i, a) => a.indexOf(v) === i).join(', ')],
+    return res.status(422).json({
+      success: false,
+      message: 'Error de validacion',
+      errors: { city: ['Ciudad fuera de operacion'] },
     });
   }
 
