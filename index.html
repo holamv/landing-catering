@@ -1179,8 +1179,6 @@
         <div class="fg" id="fg-estab"><label>Nombre del establecimiento <span class="req">*</span></label><input type="text" id="festab"><span class="fg-error-msg">Ingresa el nombre de tu establecimiento.</span></div>
 
         <!-- Horarios de atención -->
-        <div class="fg" id="fg-horario"><label>Horario de atención de local <span class="req">*</span></label><input type="text" id="fhorario"><span class="fg-error-msg">Indica el horario de atención.</span></div>
-
         <!-- Dirección -->
         <div class="fg" id="fg-direccion"><label>Dirección <span class="req">*</span></label><input type="text" id="fdireccion" autocomplete="off"><span class="fg-error-msg">Escribe tu dirección y elige una opción de la lista que aparece.</span></div>
 
@@ -1794,7 +1792,6 @@
     var pais      = document.getElementById('fp').value;
     var ciudad    = document.getElementById('fciudad').value;
     var estab     = document.getElementById('festab').value.trim();
-    var horario   = document.getElementById('fhorario').value.trim();
     var direccion = document.getElementById('fdireccion').value.trim();
     var zona      = document.getElementById('fzona').value.trim();
     var cargo     = document.getElementById('fcargo').value;
@@ -1808,7 +1805,6 @@
     if (!ciudad)    { setError('fg-ciudad');    hasError = true; }
     if (!cargo)     { setError('fg-cargo');     hasError = true; }
     if (!estab)     { setError('fg-estab');     hasError = true; }
-    if (!horario)   { setError('fg-horario');   hasError = true; }
     if (!direccionValidada) { setError('fg-direccion'); hasError = true; }
     if (!zona)      { setError('fg-zona');      hasError = true; }
 
@@ -1840,7 +1836,7 @@
     // Mapeo landing → columnas del BackOffice:
     //   nombre→NOMBRE · correo→EMAIL · telefono→TELÉFONO · establecimiento→CATERING
     //   ciudad→OFICINA · zona→DISTRITO · direccion→DIRECCIÓN · cargo→CARGO
-    //   comentarios(+horario)→MENSAJE · FECHA la pone el backend
+    //   comentarios→MENSAJE (tal cual, sin nada agregado) · FECHA la pone el backend
     // La oficina no se adivina desde el país: es la ciudad que eligió la
     // persona, que son exactamente las oficinas que tiene el BackOffice.
     var backendPayload = {
@@ -1853,10 +1849,10 @@
       ciudad:    ciudad,
       distrito:  zona,
       direccion: direccion,
-      // El horario viaja en su propio campo: el BackOffice no tiene columna
-      // para él y lo anexa al mensaje del lado del servidor. Si lo pegáramos
-      // acá también, saldría duplicado.
-      horario:   horario,
+      // El horario ya no se pregunta en el formulario. El proxy (api/lead.js)
+      // rellena un valor fijo para 'horario' porque el BackOffice todavía
+      // exige el campo 'schedule' como obligatorio -- ver el comentario en
+      // el proxy para el detalle y qué hacer cuando eso cambie.
       mensaje:   comentario
     };
 
@@ -1895,12 +1891,12 @@
     city: 'fg-ciudad',
     position: 'fg-cargo',
     catering_name: 'fg-estab',
-    schedule: 'fg-horario',
     direction: 'fg-direccion',
     district: 'fg-zona',
     message: 'fg-comentarios'
-    // country y branch_office_id no tienen campo visible en el formulario: el
-    // pais lo deduce la URL y la oficina la resuelve el BackOffice. Si vinieran
+    // country, branch_office_id y schedule no tienen campo visible en el
+    // formulario: el pais lo deduce la URL, la oficina la resuelve el
+    // BackOffice, y schedule ya no se pregunta (ver api/lead.js). Si vinieran
     // en errors seria un problema de configuracion, no algo que el visitante
     // pueda corregir, asi que caen en el aviso general.
   };

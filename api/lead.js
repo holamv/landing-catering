@@ -71,7 +71,7 @@ export default async function handler(req, res) {
   const CLAVE_API = {
     nombre: 'name', email: 'email', telefono: 'phone', catering: 'catering_name',
     cargo: 'position', pais: 'country', ciudad: 'city', distrito: 'district',
-    direccion: 'direction', horario: 'schedule',
+    direccion: 'direction',
   };
 
   const errors = {};
@@ -112,7 +112,16 @@ export default async function handler(req, res) {
     city: city,
     district: b.distrito,
     direction: b.direccion,
-    schedule: b.horario,
+    // El formulario ya no pregunta el horario. El BackOffice sigue exigiendo
+    // 'schedule' (required|string), pero SOLO le pega "| Horario: ..." al
+    // mensaje cuando PHP considera el valor "no vacio" -- y en PHP la cadena
+    // "0" SI cuenta como vacia (empty("0") === true), aunque para Laravel
+    // sea un string valido y no-vacio (pasa 'required'). Con schedule:"0" se
+    // cumple la validacion pero el backend nunca dispara el append: el
+    // Mensaje queda igual a lo que la persona escribio en Comentarios.
+    // Si el dia de mañana el backend deja de exigir 'schedule' (nullable),
+    // esta linea se puede borrar sin mas.
+    schedule: '0',
     message: b.mensaje || '',
   };
 
