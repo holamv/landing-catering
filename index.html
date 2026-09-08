@@ -1192,6 +1192,20 @@
           <span class="fg-error-msg">El comentario es muy largo. Acórtalo un poco.</span>
         </div>
 
+        <!-- Checkbox de aceptación. Solo visual: no manda nada nuevo al
+             Backoffice (eso requeriría que Adín agregue una columna), pero
+             sin marcarlo el formulario no envía -- igual que cualquier otro
+             campo obligatorio. Colombia (Ley 1581) exige autorización previa
+             y expresa para tratar datos personales; un link en el pie que
+             nadie está obligado a abrir no cumple eso. -->
+        <div class="fg" id="fg-acepto" style="display:flex;align-items:flex-start;gap:10px;margin-bottom:4px;">
+          <input type="checkbox" id="facepto" style="width:18px;height:18px;flex-shrink:0;margin-top:2px;accent-color:var(--verde);cursor:pointer;">
+          <label for="facepto" style="font-size:0.82rem;font-weight:400;text-transform:none;letter-spacing:normal;color:var(--gris);cursor:pointer;">
+            He leído y acepto los <a href="#" onclick="abrirTerminos(); return false;">Términos</a> y la <a href="#" onclick="abrirPrivacidad(); return false;">Política de Privacidad</a>.
+          </label>
+          <span class="fg-error-msg">Debes aceptar los Términos y la Política de Privacidad para continuar.</span>
+        </div>
+
         <!-- Aviso de fallo de envío: solo aparece si el lead no se pudo guardar -->
         <div id="envio-fallo" style="display:none;background:#fff4f4;border:1.5px solid #e5484d;border-radius:12px;padding:14px 16px;margin-bottom:16px;color:#a3161a;font-size:0.9rem;line-height:1.5">
           No pudimos enviar tu solicitud. Revisa tu conexión e inténtalo de nuevo — tus datos siguen acá.
@@ -1807,6 +1821,7 @@
     if (!estab)     { setError('fg-estab');     hasError = true; }
     if (!direccionValidada) { setError('fg-direccion'); hasError = true; }
     if (!zona)      { setError('fg-zona');      hasError = true; }
+    if (!document.getElementById('facepto').checked) { setError('fg-acepto'); hasError = true; }
 
     if (hasError) {
       // Scroll al primer error
