@@ -1182,7 +1182,7 @@
         <div class="fg" id="fg-horario"><label>Horario de atención de local <span class="req">*</span></label><input type="text" id="fhorario"><span class="fg-error-msg">Indica el horario de atención.</span></div>
 
         <!-- Dirección -->
-        <div class="fg" id="fg-direccion"><label>Dirección <span class="req">*</span></label><input type="text" id="fdireccion"><span class="fg-error-msg">Ingresa la dirección del local.</span></div>
+        <div class="fg" id="fg-direccion"><label>Dirección <span class="req">*</span></label><input type="text" id="fdireccion" autocomplete="off"><span class="fg-error-msg">Escribe tu dirección y elige una opción de la lista que aparece.</span></div>
 
         <!-- Zona / Distrito -->
         <div class="fg" id="fg-zona"><label>Zona / Distrito <span class="req">*</span></label><input type="text" id="fzona"><span class="fg-error-msg">Indica la zona o distrito.</span></div>
@@ -1605,13 +1605,35 @@
   };
   var mvAutocomplete = null;
 
+  // Solo se acepta una dirección elegida del listado de Google, no texto
+  // libre: alguien puede escribir cualquier cosa ("aijsdas") y el campo
+  // vacío no lo detecta. Esta bandera es la fuente de verdad para saber si
+  // lo que hay en el campo es una dirección real o algo tipeado a mano.
+  var direccionValidada = false;
+
   function mvIniciarAutocompleteDireccion() {
     var input = document.getElementById('fdireccion');
     if (!input || !window.google || !google.maps || !google.maps.places) return;
     mvAutocomplete = new google.maps.places.Autocomplete(input, {
-      fields: ['formatted_address'],
+      fields: ['place_id', 'formatted_address'],
       types: ['address']
     });
+
+    // Cualquier tecleo manual invalida la selección previa. Esto corre
+    // ANTES de que el clic en una sugerencia dispare place_changed, así que
+    // una eleccion real siempre queda validada al final, sin importar el
+    // orden en que el navegador dispare los eventos.
+    input.addEventListener('input', function () { direccionValidada = false; });
+
+    mvAutocomplete.addListener('place_changed', function () {
+      var lugar = mvAutocomplete.getPlace();
+      direccionValidada = !!(lugar && lugar.place_id);
+      if (direccionValidada) {
+        var grupo = document.getElementById('fg-direccion');
+        if (grupo) grupo.classList.remove('error');
+      }
+    });
+
     mvActualizarSesgoAutocomplete();
   }
   window.mvIniciarAutocompleteDireccion = mvIniciarAutocompleteDireccion;
@@ -1787,7 +1809,7 @@
     if (!cargo)     { setError('fg-cargo');     hasError = true; }
     if (!estab)     { setError('fg-estab');     hasError = true; }
     if (!horario)   { setError('fg-horario');   hasError = true; }
-    if (!direccion) { setError('fg-direccion'); hasError = true; }
+    if (!direccionValidada) { setError('fg-direccion'); hasError = true; }
     if (!zona)      { setError('fg-zona');      hasError = true; }
 
     if (hasError) {
