@@ -668,8 +668,16 @@
     outline: none; transition: border-color 0.2s, box-shadow 0.2s;
     appearance: none;
   }
+  .tel-wrap { display: flex; gap: 8px; }
   .fg .phone-num { width: auto !important; flex: 1 !important; min-width: 0 !important; box-sizing: border-box; }
-  .fg .phone-code { width: 100px !important; flex-shrink: 0; appearance: auto; -webkit-appearance: auto; }
+  .fg .phone-code {
+    width: auto !important; min-width: 56px; flex-shrink: 0; box-sizing: border-box;
+    background: var(--gris-claro); border: 1.5px solid var(--borde);
+    border-radius: 12px; padding: 13px 10px;
+    font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.9rem; font-weight: 700;
+    color: var(--txt); text-align: center;
+    display: flex; align-items: center; justify-content: center;
+  }
   .fg input::placeholder, .fg textarea::placeholder { color: #aaa; }
   .fg input:focus, .fg select:focus, .fg textarea:focus {
     border-color: var(--verde);
@@ -1136,8 +1144,11 @@
         <!-- WhatsApp con código de país -->
         <div class="fg" id="fg-telefono">
           <label>WhatsApp / Teléfono <span class="req">*</span></label>
-          <input type="tel" id="ftelnum" placeholder="+57 300 000 0000" class="phone-num">
-          <span class="fg-error-msg">Ingresa tu número de teléfono.</span>
+          <div class="tel-wrap">
+            <span id="ftelcod" class="phone-code">+51</span>
+            <input type="tel" id="ftelnum" inputmode="numeric" autocomplete="tel-national" class="phone-num">
+          </div>
+          <span class="fg-error-msg">Ingresa un número de teléfono válido.</span>
         </div>
 
         <!-- Ciudad — solo donde MV opera. Reemplaza al selector de país: la
@@ -1522,9 +1533,13 @@
     'México':   ['Ciudad de México', 'Guadalajara', 'Monterrey']
   };
 
-  // Prefijo de teléfono por país, para que el ejemplo no muestre un formato
-  // de otro país (antes decía +57 en las tres landings).
-  var TEL_HINT = { 'Peru': '+51 999 999 999', 'Colombia': '+57 300 000 0000', 'México': '+52 55 0000 0000' };
+  // Prefijo y cantidad exacta de dígitos del celular por país. Son celulares
+  // (WhatsApp), no fijos: Perú son 9 dígitos; Colombia y México, 10. El
+  // prefijo se muestra fijo aparte, así nadie lo escribe de más ni de menos
+  // ni lo confunde con el de otro país (antes el ejemplo decía +57 en las tres landings).
+  var TEL_PREFIJO = { 'Peru': '+51', 'Colombia': '+57', 'México': '+52' };
+  var TEL_DIGITOS = { 'Peru': 9, 'Colombia': 10, 'México': 10 };
+  var TEL_PLACEHOLDER = { 'Peru': '987 654 321', 'Colombia': '300 000 0000', 'México': '55 1234 5678' };
 
   function sincronizarFormPais(pais) {
     var hiddenEl = document.getElementById('fp');
@@ -1550,11 +1565,31 @@
       else if (previo && lista.indexOf(previo) >= 0) sel.value = previo;
     }
 
+    var cod = document.getElementById('ftelcod');
+    if (cod) cod.textContent = TEL_PREFIJO[pais] || '+57';
     var tel = document.getElementById('ftelnum');
-    if (tel) tel.placeholder = TEL_HINT[pais] || '';
+    if (tel) {
+      var digitos = TEL_DIGITOS[pais] || 10;
+      tel.placeholder = TEL_PLACEHOLDER[pais] || '';
+      tel.maxLength = digitos;
+      tel.dataset.digitos = digitos;
+      // Si ya había algo escrito y el país cambió a uno con menos dígitos
+      // (ej. de Colombia a Perú), se recorta para no dejar un número inválido.
+      if (tel.value.length > digitos) tel.value = tel.value.slice(0, digitos);
+    }
 
     mvActualizarSesgoAutocomplete();
   }
+
+  // Solo dígitos, y nunca más de los que tiene un celular del país actual.
+  // Filtra en cada tecla y también en el pegado (paste dispara 'input' igual).
+  document.addEventListener('input', function (e) {
+    if (e.target && e.target.id === 'ftelnum') {
+      var max = parseInt(e.target.dataset.digitos || '10', 10);
+      var limpio = e.target.value.replace(/\D/g, '').slice(0, max);
+      if (limpio !== e.target.value) e.target.value = limpio;
+    }
+  });
 
   // ── Autocompletado de dirección (Google Places) ─────────────────────
   // Solo agiliza la búsqueda: el campo sigue siendo texto libre, así que
@@ -1730,7 +1765,10 @@
 
     var nombre    = document.getElementById('fn').value.trim();
     var correo    = document.getElementById('fe').value.trim();
-    var telefono  = document.getElementById('ftelnum').value.trim();
+    var telNum    = document.getElementById('ftelnum').value.trim();
+    var telCod    = document.getElementById('ftelcod').textContent.trim();
+    var telDigitosReq = parseInt(document.getElementById('ftelnum').dataset.digitos || '10', 10);
+    var telefono  = telNum ? (telCod + ' ' + telNum) : '';
     var pais      = document.getElementById('fp').value;
     var ciudad    = document.getElementById('fciudad').value;
     var estab     = document.getElementById('festab').value.trim();
@@ -1744,7 +1782,7 @@
 
     if (!nombre)    { setError('fg-nombre');    hasError = true; }
     if (!correo || !validateEmail(correo)) { setError('fg-correo');   hasError = true; }
-    if (!telefono)  { setError('fg-telefono');  hasError = true; }
+    if (telNum.length !== telDigitosReq) { setError('fg-telefono'); hasError = true; }
     if (!ciudad)    { setError('fg-ciudad');    hasError = true; }
     if (!cargo)     { setError('fg-cargo');     hasError = true; }
     if (!estab)     { setError('fg-estab');     hasError = true; }
