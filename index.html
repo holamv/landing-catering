@@ -687,6 +687,11 @@
   .fg select option { background: var(--blanco); }
   .fg textarea { resize: vertical; min-height: 85px; }
   .fg-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  /* En celular angosto, dos campos apretados es peor que uno apilado --
+     sobre todo el teléfono, que ya tiene su propio prefijo + número adentro. */
+  @media (max-width: 480px) {
+    .fg-row { grid-template-columns: 1fr; }
+  }
   .btn-sub {
     width: 100%; margin-top: 6px;
     background: var(--verde); color: var(--blanco);
@@ -1138,41 +1143,51 @@
         <!-- Nombre completo -->
         <div class="fg" id="fg-nombre"><label>Nombre completo <span class="req">*</span></label><input type="text" id="fn" placeholder="Tu nombre y apellido"><span class="fg-error-msg">Por favor ingresa tu nombre completo.</span></div>
 
-        <!-- Correo -->
-        <div class="fg" id="fg-correo"><label>Correo electrónico <span class="req">*</span></label><input type="email" id="fe" placeholder="tu@correo.com"><span class="fg-error-msg">Ingresa un correo electrónico válido.</span></div>
+        <!-- Correo y Teléfono van en la misma fila: ambos son datos de
+             contacto, de altura similar. Se apilan solos en pantallas
+             chicas (ver @media más abajo). -->
+        <div class="fg-row">
+          <!-- Correo -->
+          <div class="fg" id="fg-correo"><label>Correo electrónico <span class="req">*</span></label><input type="email" id="fe" placeholder="tu@correo.com"><span class="fg-error-msg">Ingresa un correo electrónico válido.</span></div>
 
-        <!-- WhatsApp con código de país -->
-        <div class="fg" id="fg-telefono">
-          <label>WhatsApp / Teléfono <span class="req">*</span></label>
-          <div class="tel-wrap">
-            <span id="ftelcod" class="phone-code">+51</span>
-            <input type="tel" id="ftelnum" inputmode="numeric" autocomplete="tel-national" class="phone-num">
+          <!-- WhatsApp con código de país -->
+          <div class="fg" id="fg-telefono">
+            <label>WhatsApp / Teléfono <span class="req">*</span></label>
+            <div class="tel-wrap">
+              <span id="ftelcod" class="phone-code">+51</span>
+              <input type="tel" id="ftelnum" inputmode="numeric" autocomplete="tel-national" class="phone-num">
+            </div>
+            <span class="fg-error-msg">Ingresa un número de teléfono válido.</span>
           </div>
-          <span class="fg-error-msg">Ingresa un número de teléfono válido.</span>
         </div>
 
         <!-- Ciudad — solo donde MV opera. Reemplaza al selector de país: la
              ciudad implica el país (Lima/Piura = Perú), y el país ya viene en
              la URL (/pe /co /mx). El país sigue viajando en el hidden #fp. -->
-        <div class="fg" id="fg-ciudad">
-          <label>Ciudad <span class="req">*</span></label>
-          <select id="fciudad">
-            <option value="" disabled selected>Selecciona tu ciudad</option>
-          </select>
-          <span class="fg-error-msg">Selecciona tu ciudad.</span>
-        </div>
         <input type="hidden" id="fp" value="Peru">
 
-        <!-- Cargo (rol en el establecimiento) — requerido por el BackOffice (columna CARGO) -->
-        <div class="fg" id="fg-cargo">
-          <label>Cargo <span class="req">*</span></label>
-          <select id="fcargo">
-            <option value="" disabled selected>Selecciona tu cargo</option>
-            <option value="Dueño">Dueño / Dueña</option>
-            <option value="Administrador">Administrador / Administradora</option>
-            <option value="Otro">Otro</option>
-          </select>
-          <span class="fg-error-msg">Indica tu cargo.</span>
+        <!-- Ciudad y Cargo van en la misma fila: los dos son desplegables
+             cortos, no necesitan el ancho completo del formulario. -->
+        <div class="fg-row">
+          <div class="fg" id="fg-ciudad">
+            <label>Ciudad <span class="req">*</span></label>
+            <select id="fciudad">
+              <option value="" disabled selected>Selecciona tu ciudad</option>
+            </select>
+            <span class="fg-error-msg">Selecciona tu ciudad.</span>
+          </div>
+
+          <!-- Cargo (rol en el establecimiento) — requerido por el BackOffice (columna CARGO) -->
+          <div class="fg" id="fg-cargo">
+            <label>Cargo <span class="req">*</span></label>
+            <select id="fcargo">
+              <option value="" disabled selected>Selecciona tu cargo</option>
+              <option value="Dueño">Dueño / Dueña</option>
+              <option value="Administrador">Administrador / Administradora</option>
+              <option value="Otro">Otro</option>
+            </select>
+            <span class="fg-error-msg">Indica tu cargo.</span>
+          </div>
         </div>
 
         <!-- Nombre del establecimiento -->
