@@ -692,6 +692,17 @@
   @media (max-width: 480px) {
     .fg-row { grid-template-columns: 1fr; }
   }
+  /* La regla ".fg input" (pensada para cajas de texto) le aplicaba padding,
+     fondo y appearance:none también al checkbox de aceptación, dejándolo
+     como una burbuja vacía sin tilde -- no es que no dejara marcarlo, es
+     que no mostraba si estaba marcado o no. El selector por id pesa más
+     que ".fg input" sin necesitar !important, así que esto gana solo. */
+  #facepto {
+    appearance: auto; -webkit-appearance: checkbox;
+    width: 18px; height: 18px; padding: 0; margin-top: 2px;
+    border: none; border-radius: 0; background: none; box-shadow: none;
+    accent-color: var(--verde); cursor: pointer; flex-shrink: 0;
+  }
   .btn-sub {
     width: 100%; margin-top: 6px;
     background: var(--verde); color: var(--blanco);
@@ -1214,7 +1225,7 @@
              y expresa para tratar datos personales; un link en el pie que
              nadie está obligado a abrir no cumple eso. -->
         <div class="fg" id="fg-acepto" style="display:flex;align-items:flex-start;gap:10px;margin-bottom:4px;">
-          <input type="checkbox" id="facepto" style="width:18px;height:18px;flex-shrink:0;margin-top:2px;accent-color:var(--verde);cursor:pointer;">
+          <input type="checkbox" id="facepto">
           <label for="facepto" style="font-size:0.82rem;font-weight:400;text-transform:none;letter-spacing:normal;color:var(--gris);cursor:pointer;">
             He leído y acepto los <a href="#" onclick="abrirTerminos(); return false;">Términos</a> y la <a href="#" onclick="abrirPrivacidad(); return false;">Política de Privacidad</a>.
           </label>
