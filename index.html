@@ -1345,8 +1345,11 @@
   var MV_DISPOSITIVO = (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) ? 'movil' : 'escritorio';
 
   function mvEvento(tipo, detalle) {
+    // Se manda la CIUDAD elegida, no el pais: el proxy deduce el pais a partir de
+    // ella. Mientras la persona no elige, va vacio en vez de asumir Peru, que era
+    // lo que hacia aparecer al trafico de Bogota como peruano.
     var pais = '';
-    try { pais = (document.getElementById('fp') || {}).value || ''; } catch (e) {}
+    try { pais = (document.getElementById('fciudad') || {}).value || ''; } catch (e) {}
     try {
       fetch('/api/evento', {
         method: 'POST',
