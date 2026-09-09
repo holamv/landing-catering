@@ -44,6 +44,11 @@ function normalizar(texto) {
   return String(texto || '').toLowerCase().trim();
 }
 
+// Mismo webhook que usa api/evento.js: aca solo se registra el cierre del
+// embudo (lead_ok) cuando el BackOffice confirma el guardado.
+const EVENTOS_WEBHOOK = process.env.EVENTOS_WEBHOOK_URL
+  || 'https://n8n.manzanaverde.la/webhook/cocinas-evento';
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'method_not_allowed', message: 'Solo POST' });
@@ -136,6 +141,27 @@ export default async function handler(req, res) {
     });
 
     const data = await r.json().catch(() => ({}));
+
+    // Cierre del embudo: el BackOffice confirmo que el lead quedo guardado
+    // (201 nuevo, 200 duplicado del dia). Se registra como evento para que el
+    // reporte compare "enviaron" contra "guardados" sin tocar la base de
+    // produccion. Dispara y olvida: un fallo aca no afecta la respuesta.
+    if (r.ok) {
+      fetch(EVENTOS_WEBHOOK, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id: String(b.session_id || '').slice(0, 64),
+          event: 'lead_ok',
+          country: country,
+          channel: String(b.channel || 'directo').slice(0, 100),
+          campaign: b.campaign ? String(b.campaign).slice(0, 100) : '',
+          device: b.device === 'movil' || b.device === 'escritorio' ? b.device : '',
+          detail: data && data.data && data.data.duplicated ? 'duplicado' : '',
+        }),
+      }).catch(() => {});
+    }
+
     return res.status(r.status).json(data);
   } catch (e) {
     return res.status(502).json({

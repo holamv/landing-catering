@@ -1,9 +1,18 @@
 /**
  * Proxy server-side de EVENTOS: landing -> n8n.
  *
- * La landing avisa cada paso del visitante (view, cta_click, submit) a
- * POST /api/evento (mismo dominio, sin CORS) y esta funcion lo reenvia al
- * webhook de n8n, que lo guarda en la data table eventos_landing_cocinas.
+ * La landing avisa cada paso del visitante a POST /api/evento (mismo dominio,
+ * sin CORS) y esta funcion lo reenvia al webhook de n8n, que lo guarda en la
+ * data table eventos_landing_cocinas.
+ *
+ * Embudo completo que se mide:
+ *   view           entro a la pagina
+ *   form_visible   llego hasta el formulario (lo tuvo en pantalla)
+ *   form_start     toco el primer campo
+ *   cta_click      hizo clic en un boton que lleva al formulario
+ *   submit_blocked intento enviar y se trabo (detail = campos que fallaron)
+ *   submit         envio con el formulario valido
+ *   lead_ok        el BackOffice confirmo el guardado (lo manda api/lead.js)
  *
  * PROVISIONAL: es para las pruebas. Cuando la medicion este validada, esto
  * se muda al datalake y solo cambia la URL de aca; la landing no se entera.
@@ -15,7 +24,8 @@
 const WEBHOOK = process.env.EVENTOS_WEBHOOK_URL
   || 'https://n8n.manzanaverde.la/webhook/cocinas-evento';
 
-const EVENTOS_VALIDOS = ['view', 'cta_click', 'submit'];
+const EVENTOS_VALIDOS = ['view', 'form_visible', 'form_start', 'cta_click', 'submit_blocked', 'submit', 'lead_ok'];
+const DISPOSITIVOS_VALIDOS = ['movil', 'escritorio'];
 
 const PAIS_POR_OFICINA = {
   'lima': 'PE',
@@ -49,6 +59,8 @@ export default async function handler(req, res) {
     country: PAIS_POR_OFICINA[String(b.pais || '').toLowerCase().trim()] || '',
     channel: String(b.channel || 'directo').slice(0, 100),
     campaign: b.campaign ? String(b.campaign).slice(0, 100) : '',
+    device: DISPOSITIVOS_VALIDOS.includes(b.device) ? b.device : '',
+    detail: b.detail ? String(b.detail).slice(0, 200) : '',
   };
 
   try {

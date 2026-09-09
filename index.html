@@ -1339,7 +1339,12 @@
     } catch (e) { return 'sin-sesion'; }
   }
 
-  function mvEvento(tipo) {
+  // Celular o computadora: los dueños de restaurante entran casi todos desde
+  // el celular; si ahí la conversión es peor, el problema es el formulario
+  // en pantalla chica, no el mensaje.
+  var MV_DISPOSITIVO = (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) ? 'movil' : 'escritorio';
+
+  function mvEvento(tipo, detalle) {
     var pais = '';
     try { pais = (document.getElementById('fp') || {}).value || ''; } catch (e) {}
     try {
@@ -1351,7 +1356,9 @@
           event: tipo,
           pais: pais,
           channel: MV_CANAL,
-          campaign: MV_CAMPANA
+          campaign: MV_CAMPANA,
+          device: MV_DISPOSITIVO,
+          detail: detalle || ''
         }),
         keepalive: true
       }).catch(function () {});
@@ -1367,6 +1374,27 @@
   }
 
   mvUnaVez('mv_visto_cocinas', 'view');
+
+  // Llegó hasta el formulario: separa "no bajan" de "bajan y no llenan".
+  // Una vez por sesión, cuando al menos un cuarto del formulario está en pantalla.
+  window.addEventListener('DOMContentLoaded', function () {
+    var formSec = document.getElementById('formulario');
+    if (!formSec || !('IntersectionObserver' in window)) return;
+    var obsForm = new IntersectionObserver(function (entradas) {
+      entradas.forEach(function (en) {
+        if (en.isIntersecting) { mvUnaVez('mv_form_visible_cocinas', 'form_visible'); obsForm.disconnect(); }
+      });
+    }, { threshold: 0.25 });
+    obsForm.observe(formSec);
+  });
+
+  // Empezó a llenarlo: el primer campo que toca. Separa "lo ve y se asusta"
+  // de "lo empieza y se traba en algo".
+  document.addEventListener('focusin', function (e) {
+    if (e.target && e.target.closest && e.target.closest('#formulario input, #formulario select, #formulario textarea')) {
+      mvUnaVez('mv_form_start_cocinas', 'form_start');
+    }
+  });
 
   // Cualquier botón que lleve al formulario cuenta como cta_click, una vez.
   document.addEventListener('click', function (e) {
@@ -1850,6 +1878,15 @@
     if (!document.getElementById('facepto').checked) { setError('fg-acepto'); hasError = true; }
 
     if (hasError) {
+      // Se registra EN QUÉ campos se trabó. Es el dato que más decisiones
+      // destraba: si la mayoría se traba en Dirección, es la validación
+      // estricta de Google; si es en el checkbox, no lo ven.
+      var camposFallidos = [];
+      document.querySelectorAll('.fg.error').forEach(function (el) {
+        camposFallidos.push((el.id || '').replace(/^fg-/, ''));
+      });
+      mvEvento('submit_blocked', camposFallidos.join(','));
+
       // Scroll al primer error
       var firstError = document.querySelector('.fg.error');
       if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1881,6 +1918,14 @@
     // La oficina no se adivina desde el país: es la ciudad que eligió la
     // persona, que son exactamente las oficinas que tiene el BackOffice.
     var backendPayload = {
+      // Solo para la medición (el proxy los usa para el evento lead_ok y no
+      // los reenvía al BackOffice): amarra el lead guardado a la sesión que
+      // lo produjo, el anuncio que la trajo y el dispositivo.
+      session_id: mvSesion(),
+      channel:   MV_CANAL,
+      campaign:  MV_CAMPANA,
+      device:    MV_DISPOSITIVO,
+
       nombre:    nombre,
       email:     correo,
       telefono:  telefono,
