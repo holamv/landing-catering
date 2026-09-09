@@ -1,11 +1,12 @@
 /**
- * Proxy server-side de EVENTOS: landing -> n8n.
+ * Proxy server-side de EVENTOS: landing de cocinas -> datalake.
  *
- * La landing avisa cada paso del visitante a POST /api/evento (mismo dominio,
- * sin CORS) y esta funcion lo reenvia al webhook de n8n, que lo guarda en la
- * data table eventos_landing_cocinas.
+ * La landing avisa cada paso del visitante a POST /api/evento (mismo dominio, sin
+ * CORS) y esta funcion lo escribe en adquisicion.eventos_landing del datalake, a
+ * traves del RPC restringido. La clave de escritura vive en las variables de
+ * Vercel y nunca llega al navegador.
  *
- * Embudo completo que se mide:
+ * Embudo que se mide:
  *   view           entro a la pagina
  *   form_visible   llego hasta el formulario (lo tuvo en pantalla)
  *   form_start     toco el primer campo
@@ -14,31 +15,34 @@
  *   submit         envio con el formulario valido
  *   lead_ok        el BackOffice confirmo el guardado (lo manda api/lead.js)
  *
- * PROVISIONAL: es para las pruebas. Cuando la medicion este validada, esto
- * se muda al datalake y solo cambia la URL de aca; la landing no se entera.
- *
- * Es "dispara y olvida": si algo falla, se responde 204 igual. Medir nunca
+ * Es "dispara y olvida": si el datalake falla, se responde 204 igual. Medir nunca
  * puede romperle la experiencia a quien esta llenando el formulario.
  */
 
-const WEBHOOK = process.env.EVENTOS_WEBHOOK_URL
-  || 'https://n8n.manzanaverde.la/webhook/cocinas-evento';
-
-const EVENTOS_VALIDOS = ['view', 'form_visible', 'form_start', 'cta_click', 'submit_blocked', 'submit', 'lead_ok'];
-const DISPOSITIVOS_VALIDOS = ['movil', 'escritorio'];
+import { registrarEvento, LANDING_COCINAS } from './_datalake.js';
 
 const PAIS_POR_OFICINA = {
   'lima': 'PE',
   'peru': 'PE',
   'perú': 'PE',
+  'piura': 'PE',
   'bogota': 'CO',
   'bogotá': 'CO',
   'colombia': 'CO',
   'ciudad de mexico': 'MX',
   'ciudad de méxico': 'MX',
+  'guadalajara': 'MX',
+  'monterrey': 'MX',
   'mexico': 'MX',
   'méxico': 'MX',
 };
+
+// Los eventos que la landing puede mandar. El datalake tiene su propio catalogo y
+// rechaza lo que no reconoce: esta lista evita el viaje de ida y vuelta.
+const EVENTOS_VALIDOS = [
+  'view', 'form_visible', 'form_start', 'cta_click',
+  'submit_blocked', 'submit', 'lead_ok',
+];
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -53,21 +57,25 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'evento_desconocido' });
   }
 
-  const payload = {
-    session_id: String(b.session_id || '').slice(0, 64),
-    event: b.event,
-    country: PAIS_POR_OFICINA[String(b.pais || '').toLowerCase().trim()] || '',
-    channel: String(b.channel || 'directo').slice(0, 100),
-    campaign: b.campaign ? String(b.campaign).slice(0, 100) : '',
-    device: DISPOSITIVOS_VALIDOS.includes(b.device) ? b.device : '',
-    detail: b.detail ? String(b.detail).slice(0, 200) : '',
-  };
+  const ciudad = String(b.pais || '').trim();
 
   try {
-    await fetch(WEBHOOK, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+    await registrarEvento({
+      landing: LANDING_COCINAS,
+      session_id: b.session_id,
+      event: b.event,
+      // La landing manda en 'pais' la ciudad elegida (Lima, Bogota...). Hasta que
+      // la persona elige, no se sabe el pais: se deja vacio en vez de asumir Peru.
+      country: PAIS_POR_OFICINA[ciudad.toLowerCase()] || null,
+      city: ciudad || null,
+      channel: b.channel || 'directo',
+      medium: b.medium,
+      campaign: b.campaign,
+      content: b.content,
+      term: b.term,
+      device: b.device,
+      detail: b.detail,
+      is_test: b.channel === 'prueba',
     });
   } catch (e) {
     // Se traga el error a proposito: medir no puede romper la landing.

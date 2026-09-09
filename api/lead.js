@@ -44,10 +44,7 @@ function normalizar(texto) {
   return String(texto || '').toLowerCase().trim();
 }
 
-// Mismo webhook que usa api/evento.js: aca solo se registra el cierre del
-// embudo (lead_ok) cuando el BackOffice confirma el guardado.
-const EVENTOS_WEBHOOK = process.env.EVENTOS_WEBHOOK_URL
-  || 'https://n8n.manzanaverde.la/webhook/cocinas-evento';
+import { registrarEvento, registrarLead, LANDING_COCINAS } from './_datalake.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -142,23 +139,48 @@ export default async function handler(req, res) {
 
     const data = await r.json().catch(() => ({}));
 
-    // Cierre del embudo: el BackOffice confirmo que el lead quedo guardado
-    // (201 nuevo, 200 duplicado del dia). Se registra como evento para que el
-    // reporte compare "enviaron" contra "guardados" sin tocar la base de
-    // produccion. Dispara y olvida: un fallo aca no afecta la respuesta.
+    // El lead queda tambien en el datalake, con el anuncio que lo trajo y que
+    // respondio el BackOffice. Asi el reporte compara "enviaron" contra
+    // "guardados" sin tocar produccion. Dispara y olvida: un fallo aca no
+    // afecta lo que ve la persona.
+    const esPrueba = b.channel === 'prueba';
+    const origen = {
+      channel: b.channel || 'directo',
+      medium: b.medium,
+      campaign: b.campaign,
+      content: b.content,
+      term: b.term,
+      device: b.device,
+    };
+
+    registrarLead({
+      landing: LANDING_COCINAS,
+      session_id: b.session_id,
+      full_name: b.nombre,
+      phone: b.telefono,
+      email: b.email,
+      country: country,
+      city: city,
+      district: b.distrito,
+      address: b.direccion,
+      business_name: b.catering,
+      position: b.cargo,
+      message: b.mensaje,
+      backend_status: r.ok ? (data && data.data && data.data.duplicated ? 'duplicado' : 'ok') : 'error',
+      is_test: esPrueba,
+      ...origen,
+    }).catch(() => {});
+
     if (r.ok) {
-      fetch(EVENTOS_WEBHOOK, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          session_id: String(b.session_id || '').slice(0, 64),
-          event: 'lead_ok',
-          country: country,
-          channel: String(b.channel || 'directo').slice(0, 100),
-          campaign: b.campaign ? String(b.campaign).slice(0, 100) : '',
-          device: b.device === 'movil' || b.device === 'escritorio' ? b.device : '',
-          detail: data && data.data && data.data.duplicated ? 'duplicado' : '',
-        }),
+      registrarEvento({
+        landing: LANDING_COCINAS,
+        session_id: b.session_id,
+        event: 'lead_ok',
+        country: country,
+        city: city,
+        detail: data && data.data && data.data.duplicated ? 'duplicado' : null,
+        is_test: esPrueba,
+        ...origen,
       }).catch(() => {});
     }
 
