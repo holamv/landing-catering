@@ -153,7 +153,9 @@ export default async function handler(req, res) {
       device: b.device,
     };
 
-    registrarLead({
+    // Se espera a proposito: en Vercel la funcion se congela apenas responde,
+    // asi que una escritura sin await se pierde a la mitad.
+    await registrarLead({
       landing: LANDING_COCINAS,
       session_id: b.session_id,
       full_name: b.nombre,
@@ -172,7 +174,7 @@ export default async function handler(req, res) {
     }).catch(() => {});
 
     if (r.ok) {
-      registrarEvento({
+      await registrarEvento({
         landing: LANDING_COCINAS,
         session_id: b.session_id,
         event: 'lead_ok',
