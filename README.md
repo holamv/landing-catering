@@ -20,12 +20,12 @@ Campos que captura el formulario (todos obligatorios menos *Comentarios*):
 
 Hoy hay **dos destinos**:
 
-1. **Google Sheet (ACTIVO — respaldo):** vía `fetch` GET `no-cors` a un **Google Apps Script**.
+1. **Google Sheet (respaldo):** vía `fetch` GET `no-cors` a un **Google Apps Script**.
    https://docs.google.com/spreadsheets/d/1nhyk8wi_RUGe3QLnVhfpqIGHCB3y_cpSNLC6s9U3IZk/edit
    Una pestaña por país (`Perú`, `Colombia`, `México`; otro → `Otros`). Columnas:
    `Fecha | Nombre | Correo | Teléfono | País | Establecimiento | Horario | Dirección | Zona / Distrito | Comentarios | Cargo`
 
-2. **Backend / BackOffice de leads (PREPARADO — pendiente de accesos):** ver sección siguiente.
+2. **Backend / BackOffice de leads (ACTIVO):** ver sección siguiente.
 
 ## ⚠️ Reglas que no se tocan
 
@@ -53,10 +53,9 @@ Guadalajara, Monterrey.
 
 ## Estado del endpoint
 
-Hasta que el PR del BackOffice este aprobado y desplegado **con la clave puesta en el
-servidor**, `CATERING_LEADS_URL` responde 401 a proposito. Todo puede quedar cableado y
-publicado, pero **la prueba real recien vale despues del deploy**: antes, un 401 no dice
-nada sobre si el circuito funciona.
+El endpoint del BackOffice (`POST /api/3.0/catering/leads`) ya está desplegado en producción, con
+`CATERING_LEADS_API_KEY` configurada en ambos lados (Vercel y el servidor). Los leads de esta
+landing ya llegan al BackOffice.
 
 ## Flujo al backend (BackOffice)
 
@@ -81,15 +80,16 @@ Mapeo landing → columnas del BackOffice:
 | `comentarios` (+`horario`) | MENSAJE | el BackOffice **no tiene** columna Horario → se anexa al mensaje |
 | *(auto)* | FECHA | la pone el backend |
 
-### Para activarlo (2 pasos)
-1. **Deploy del endpoint en el BackOffice** — `POST /api/3.0/catering/leads` ya está escrito en el
-   repo del Backoffice (controller `V3\Catering\CreateCateringLeadController`, middleware dedicado
-   `catering.leads.api` con header `X-Catering-Leads-Key`, clave en `CATERING_LEADS_API_KEY`);
-   falta que Tech lo revise, genere la clave y lo suba.
-2. **Configurar `CATERING_LEADS_API_KEY` en Vercel** con esa misma clave, y redeploy.
+### Cómo quedó activado
 
-El resto ya quedó resuelto: URL y nombres de campos definidos, la clave va server-side en el proxy
-(`api/lead.js`) y no hay CORS porque el POST es al mismo dominio.
+`POST /api/3.0/catering/leads` vive en el repo del Backoffice (controller
+`V3\Catering\CreateCateringLeadController`, middleware dedicado `catering.leads.api` con header
+`X-Catering-Leads-Key`, clave en `CATERING_LEADS_API_KEY`). La misma clave está configurada en
+Vercel (proxy `api/lead.js`, server-side, sin CORS porque el POST es al mismo dominio) y en el
+servidor del BackOffice.
+
+**Pendiente de confirmar:** el mapeo de `pais` → `OFICINA` para Colombia (Bogotá) y México (Ciudad
+de México) — ver tabla arriba.
 *(Nota: para que el Sheet capture también `Cargo`, hay que re-desplegar `apps-script/Code.gs`, que ya tiene la columna.)*
 
 ## Puesta en marcha (paso único pendiente)
