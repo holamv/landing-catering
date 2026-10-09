@@ -1,7 +1,8 @@
 # landings_catering
 
 Landing de captación para el **Programa de Socios de Manzana Verde** (Colombia · México · Perú).
-Réplica de la landing original, con el formulario reconectado a un Google Sheet propio.
+Réplica de la landing original, con el formulario conectado al BackOffice de leads (y, en
+espejo, al datalake) — ver "¿A dónde llegan los datos?" más abajo.
 
 ## Estructura
 
@@ -23,9 +24,10 @@ más abajo), que escribe en **dos destinos**:
 
 1. **Backend / BackOffice de leads (ACTIVO, el único obligatorio):** ver sección siguiente.
 2. **Datalake (espejo, para reportes):** cada lead y el evento `lead_ok` se mandan también a
-   `adquisicion.leads_landing` / `adquisicion.eventos_landing` vía `api/_datalake.js`. Es
-   "dispara y olvida": si el datalake no responde, el lead igual llega al BackOffice sin que
-   la persona que llena el formulario note nada.
+   `adquisicion.leads_landing` / `adquisicion.eventos_landing` vía `api/_datalake.js`. Se espera
+   la escritura (no es "dispara y olvida"), pero un fallo no bloquea el lead: si el datalake no
+   responde, el lead igual llega al BackOffice sin que la persona que llena el formulario note
+   nada.
 
 El Google Sheet y `apps-script/Code.gs` (sección "Puesta en marcha" más abajo) son de una
 versión anterior de esta landing: el `index.html` actual no les manda nada. Se dejan en el
@@ -67,7 +69,8 @@ El envío va por el **proxy server-side del propio proyecto**: `enviar()` hace P
 (misma URL de la landing, sin CORS) y `api/lead.js` reenvía al BackOffice
 (`POST /api/3.0/catering/leads`) con la API key leída de la variable de entorno
 `CATERING_LEADS_API_KEY` (Vercel → Project Settings → Environment Variables). Si la clave no está
-configurada, el proxy responde 503 y el lead queda igual en el Sheet de respaldo.
+configurada, el proxy responde 503 y el lead **se pierde**: no hay ningún respaldo (el Sheet es
+legado y no se usa, ver nota más arriba).
 
 Mapeo landing → columnas del BackOffice:
 
