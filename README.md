@@ -18,14 +18,18 @@ landings_catering/
 Campos que captura el formulario (todos obligatorios menos *Comentarios*):
 `nombre, correo, telefono, pais, cargo, establecimiento, horario, direccion, zona, comentarios`
 
-Hoy hay **dos destinos**:
+El envío va por **un solo camino**: el proxy server-side `api/lead.js` (ver "Flujo al backend"
+más abajo), que escribe en **dos destinos**:
 
-1. **Google Sheet (respaldo):** vía `fetch` GET `no-cors` a un **Google Apps Script**.
-   https://docs.google.com/spreadsheets/d/1nhyk8wi_RUGe3QLnVhfpqIGHCB3y_cpSNLC6s9U3IZk/edit
-   Una pestaña por país (`Perú`, `Colombia`, `México`; otro → `Otros`). Columnas:
-   `Fecha | Nombre | Correo | Teléfono | País | Establecimiento | Horario | Dirección | Zona / Distrito | Comentarios | Cargo`
+1. **Backend / BackOffice de leads (ACTIVO, el único obligatorio):** ver sección siguiente.
+2. **Datalake (espejo, para reportes):** cada lead y el evento `lead_ok` se mandan también a
+   `adquisicion.leads_landing` / `adquisicion.eventos_landing` vía `api/_datalake.js`. Es
+   "dispara y olvida": si el datalake no responde, el lead igual llega al BackOffice sin que
+   la persona que llena el formulario note nada.
 
-2. **Backend / BackOffice de leads (ACTIVO):** ver sección siguiente.
+El Google Sheet y `apps-script/Code.gs` (sección "Puesta en marcha" más abajo) son de una
+versión anterior de esta landing: el `index.html` actual no les manda nada. Se dejan en el
+repo solo como referencia histórica.
 
 ## ⚠️ Reglas que no se tocan
 
@@ -90,9 +94,13 @@ servidor del BackOffice.
 
 **Pendiente de confirmar:** el mapeo de `pais` → `OFICINA` para Colombia (Bogotá) y México (Ciudad
 de México) — ver tabla arriba.
-*(Nota: para que el Sheet capture también `Cargo`, hay que re-desplegar `apps-script/Code.gs`, que ya tiene la columna.)*
 
-## Puesta en marcha (paso único pendiente)
+## Puesta en marcha del Apps Script (legado, ya no aplica)
+
+Esta sección describe cómo desplegar `apps-script/Code.gs` para el Google Sheet de respaldo de
+una versión anterior. El `index.html` actual no llama a este script, así que estos pasos **no
+son necesarios** para que los leads lleguen al BackOffice. Se dejan documentados solo por si el
+Sheet vuelve a usarse en el futuro.
 
 El despliegue del Apps Script debe hacerse desde la cuenta de Google dueña del Sheet:
 
