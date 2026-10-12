@@ -1,7 +1,8 @@
 # landings_catering
 
 Landing de captación para el **Programa de Socios de Manzana Verde** (Colombia · México · Perú).
-Réplica de la landing original, con el formulario reconectado a un Google Sheet propio.
+Réplica de la landing original, con el formulario conectado al BackOffice de leads (y, en
+espejo, al datalake) — ver "¿A dónde llegan los datos?" más abajo.
 
 ## Estructura
 
@@ -18,14 +19,19 @@ landings_catering/
 Campos que captura el formulario (todos obligatorios menos *Comentarios*):
 `nombre, correo, telefono, pais, cargo, establecimiento, horario, direccion, zona, comentarios`
 
-Hoy hay **dos destinos**:
+El envío va por **un solo camino**: el proxy server-side `api/lead.js` (ver "Flujo al backend"
+más abajo), que escribe en **dos destinos**:
 
-1. **Google Sheet (ACTIVO — respaldo):** vía `fetch` GET `no-cors` a un **Google Apps Script**.
-   https://docs.google.com/spreadsheets/d/1nhyk8wi_RUGe3QLnVhfpqIGHCB3y_cpSNLC6s9U3IZk/edit
-   Una pestaña por país (`Perú`, `Colombia`, `México`; otro → `Otros`). Columnas:
-   `Fecha | Nombre | Correo | Teléfono | País | Establecimiento | Horario | Dirección | Zona / Distrito | Comentarios | Cargo`
+1. **Backend / BackOffice de leads (ACTIVO, el único obligatorio):** ver sección siguiente.
+2. **Datalake (espejo, para reportes):** cada lead y el evento `lead_ok` se mandan también a
+   `adquisicion.leads_landing` / `adquisicion.eventos_landing` vía `api/_datalake.js`. Se espera
+   la escritura (no es "dispara y olvida"), pero un fallo no bloquea el lead: si el datalake no
+   responde, el lead igual llega al BackOffice sin que la persona que llena el formulario note
+   nada.
 
-2. **Backend / BackOffice de leads (PREPARADO — pendiente de accesos):** ver sección siguiente.
+El Google Sheet y `apps-script/Code.gs` (sección "Puesta en marcha" más abajo) son de una
+versión anterior de esta landing: el `index.html` actual no les manda nada. Se dejan en el
+repo solo como referencia histórica.
 
 ## ⚠️ Reglas que no se tocan
 
@@ -53,10 +59,9 @@ Guadalajara, Monterrey.
 
 ## Estado del endpoint
 
-Hasta que el PR del BackOffice este aprobado y desplegado **con la clave puesta en el
-servidor**, `CATERING_LEADS_URL` responde 401 a proposito. Todo puede quedar cableado y
-publicado, pero **la prueba real recien vale despues del deploy**: antes, un 401 no dice
-nada sobre si el circuito funciona.
+El endpoint del BackOffice (`POST /api/3.0/catering/leads`) ya está desplegado en producción, con
+`CATERING_LEADS_API_KEY` configurada en ambos lados (Vercel y el servidor). Los leads de esta
+landing ya llegan al BackOffice.
 
 ## Flujo al backend (BackOffice)
 
@@ -64,7 +69,8 @@ El envío va por el **proxy server-side del propio proyecto**: `enviar()` hace P
 (misma URL de la landing, sin CORS) y `api/lead.js` reenvía al BackOffice
 (`POST /api/3.0/catering/leads`) con la API key leída de la variable de entorno
 `CATERING_LEADS_API_KEY` (Vercel → Project Settings → Environment Variables). Si la clave no está
-configurada, el proxy responde 503 y el lead queda igual en el Sheet de respaldo.
+configurada, el proxy responde 503 y el lead **se pierde**: no hay ningún respaldo (el Sheet es
+legado y no se usa, ver nota más arriba).
 
 Mapeo landing → columnas del BackOffice:
 
@@ -81,18 +87,23 @@ Mapeo landing → columnas del BackOffice:
 | `comentarios` (+`horario`) | MENSAJE | el BackOffice **no tiene** columna Horario → se anexa al mensaje |
 | *(auto)* | FECHA | la pone el backend |
 
-### Para activarlo (2 pasos)
-1. **Deploy del endpoint en el BackOffice** — `POST /api/3.0/catering/leads` ya está escrito en el
-   repo del Backoffice (controller `V3\Catering\CreateCateringLeadController`, middleware dedicado
-   `catering.leads.api` con header `X-Catering-Leads-Key`, clave en `CATERING_LEADS_API_KEY`);
-   falta que Tech lo revise, genere la clave y lo suba.
-2. **Configurar `CATERING_LEADS_API_KEY` en Vercel** con esa misma clave, y redeploy.
+### Cómo quedó activado
 
-El resto ya quedó resuelto: URL y nombres de campos definidos, la clave va server-side en el proxy
-(`api/lead.js`) y no hay CORS porque el POST es al mismo dominio.
-*(Nota: para que el Sheet capture también `Cargo`, hay que re-desplegar `apps-script/Code.gs`, que ya tiene la columna.)*
+`POST /api/3.0/catering/leads` vive en el repo del Backoffice (controller
+`V3\Catering\CreateCateringLeadController`, middleware dedicado `catering.leads.api` con header
+`X-Catering-Leads-Key`, clave en `CATERING_LEADS_API_KEY`). La misma clave está configurada en
+Vercel (proxy `api/lead.js`, server-side, sin CORS porque el POST es al mismo dominio) y en el
+servidor del BackOffice.
 
-## Puesta en marcha (paso único pendiente)
+**Pendiente de confirmar:** el mapeo de `pais` → `OFICINA` para Colombia (Bogotá) y México (Ciudad
+de México) — ver tabla arriba.
+
+## Puesta en marcha del Apps Script (legado, ya no aplica)
+
+Esta sección describe cómo desplegar `apps-script/Code.gs` para el Google Sheet de respaldo de
+una versión anterior. El `index.html` actual no llama a este script, así que estos pasos **no
+son necesarios** para que los leads lleguen al BackOffice. Se dejan documentados solo por si el
+Sheet vuelve a usarse en el futuro.
 
 El despliegue del Apps Script debe hacerse desde la cuenta de Google dueña del Sheet:
 
