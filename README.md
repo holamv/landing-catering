@@ -83,7 +83,7 @@ Mapeo landing → columnas del BackOffice:
 | `zona` | DISTRITO | |
 | `direccion` | DIRECCIÓN | |
 | `cargo` | CARGO | **campo agregado** al form (dropdown Dueño/Administrador/Otro) |
-| `pais` → ciudad | OFICINA | Perú=**Lima** (confirmado); CO=**Bogotá**, MX=**Ciudad de México** ⟵ *pendiente confirmar* |
+| `pais` → ciudad | OFICINA | Perú=**Lima**, CO=**Bogotá**, MX=**Ciudad de México** (confirmado, con alias y respaldo por oficina por defecto — ver `BranchOfficeResolver`) |
 | `comentarios` (+`horario`) | MENSAJE | el BackOffice **no tiene** columna Horario → se anexa al mensaje |
 | *(auto)* | FECHA | la pone el backend |
 
@@ -94,9 +94,6 @@ Mapeo landing → columnas del BackOffice:
 `X-Catering-Leads-Key`, clave en `CATERING_LEADS_API_KEY`). La misma clave está configurada en
 Vercel (proxy `api/lead.js`, server-side, sin CORS porque el POST es al mismo dominio) y en el
 servidor del BackOffice.
-
-**Pendiente de confirmar:** el mapeo de `pais` → `OFICINA` para Colombia (Bogotá) y México (Ciudad
-de México) — ver tabla arriba.
 
 ## Puesta en marcha del Apps Script (legado, ya no aplica)
 
