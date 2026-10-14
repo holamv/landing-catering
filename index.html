@@ -2020,10 +2020,11 @@
       }
     }
 
-    // 401/403 (clave mal configurada en el servidor) y 503 (falta configurar el
-    // proxy) no son culpa del visitante y reintentar no arregla nada: decirle
-    // "revisa tu conexión" lo manda a intentar en vano.
-    var esProblemaNuestro = estado === 401 || estado === 403 || estado === 503;
+    // 401/403 (clave mal configurada en el servidor) y cualquier 5xx (503 si falta
+    // configurar el proxy, 502 si no se pudo contactar al BackOffice, 500 si el
+    // BackOffice fallo al guardar) no son culpa del visitante y reintentar no
+    // arregla nada: decirle "revisa tu conexión" lo manda a intentar en vano.
+    var esProblemaNuestro = estado === 401 || estado === 403 || estado >= 500;
 
     var aviso = document.getElementById('envio-fallo');
     if (aviso) {
